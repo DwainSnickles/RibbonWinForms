@@ -25,6 +25,10 @@ jobs:
   publish:
     name: Pack and push
     runs-on: windows-latest
+    # The Trusted Publishing policy on nuget.org names this environment, so the OIDC token has to
+    # carry it or the exchange is refused. Declaring it also creates the environment on the first
+    # run. Removing it from either side breaks the keyless path.
+    environment: WindowsForms Ribbon
     permissions:
       contents: read
       # Lets the job ask GitHub for an OIDC token. Trusted Publishing exchanges that token for a
@@ -174,7 +178,7 @@ jobs:
           set -euo pipefail
           api_key="${SECRET_API_KEY:-$OIDC_API_KEY}"
           if [ -z "$api_key" ]; then
-            echo "::error::There is no credential to push with. Either add a NUGET_API_KEY repository secret, or make the Trusted Publishing policy match this run: repository owner 'DwainSnickles', repository 'RibbonWinForms', workflow 'publish.yml'."
+            echo "::error::There is no credential to push with. Either add a NUGET_API_KEY repository secret, or make the Trusted Publishing policy match this run: repository owner 'DwainSnickles', repository 'RibbonWinForms', workflow 'publish.yml', environment 'WindowsForms Ribbon'."
             exit 1
           fi
           # --skip-duplicate keeps a re-run of an already-published version green.

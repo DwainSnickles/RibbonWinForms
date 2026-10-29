@@ -211,7 +211,10 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
   [Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing): the job
   presents a GitHub OIDC token and nuget.org exchanges it for a temporary key that lives for an hour.
   The policy that allows it is *RibbonLib publish* on nuget.org — owner `Dwains`, repository owner
-  `DwainSnickles`, repository `RibbonWinForms`, workflow `publish.yml`. A policy starts with 7 days of
+  `DwainSnickles`, repository `RibbonWinForms`, workflow `publish.yml`, environment
+  `WindowsForms Ribbon`. Every field the policy names must match the token, environment included, so
+  the job declares `environment: WindowsForms Ribbon`; a policy created without an environment needs
+  that line removed. A policy starts with 7 days of
   temporary activation, so one successful publish is needed inside that window to make it permanent;
   if it goes inactive, re-activate it from the policy's page.
 - **Fallback:** if a `NUGET_API_KEY` repository secret exists, the workflow pushes with it instead and
