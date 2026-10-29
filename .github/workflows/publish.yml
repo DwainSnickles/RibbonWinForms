@@ -135,13 +135,30 @@ jobs:
           path: artifacts/*
           if-no-files-found: error
 
-      # Trusted Publishing: the policy registered on nuget.org names this repository owner, this
-      # repository, this workflow file and the nuget.org profile below. The token is minted from
-      # GitHub's OIDC endpoint and never touches a secret. It is requested immediately before the
-      # push because the key nuget.org returns is only valid for an hour.
+      # Two ways to authenticate. Trusted Publishing is preferred: the policy registered on
+      # nuget.org names this repository owner, this repository, this workflow file and the profile
+      # below, and the token is minted from GitHub's OIDC endpoint without touching a secret. The
+      # fallback is the NUGET_API_KEY repository secret, for when that policy cannot be made to
+      # match. A step cannot read a secret in its own `if`, so the choice is made here and the
+      # login step keys off the output.
+      - name: Choose the push credential
+        id: credential
+        if: ${{ inputs.dry_run != true }}
+        shell: bash
+        env:
+          SECRET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -n "${SECRET_API_KEY:-}" ]; then
+            echo "mode=secret" >> "$GITHUB_OUTPUT"
+            echo "Pushing with the NUGET_API_KEY repository secret."
+          else
+            echo "mode=trusted" >> "$GITHUB_OUTPUT"
+            echo "No NUGET_API_KEY secret, so this job will log in to nuget.org with GitHub OIDC."
+          fi
+
       - name: Log in to nuget.org (OIDC)
         id: login
-        if: ${{ inputs.dry_run != true }}
+        if: ${{ inputs.dry_run != true && steps.credential.outputs.mode == 'trusted' }}
         uses: NuGet/login@v1
         with:
           # The nuget.org *profile* name, not an email address and not the GitHub login.
@@ -151,16 +168,18 @@ jobs:
         if: ${{ inputs.dry_run != true }}
         shell: bash
         env:
-          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          SECRET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          OIDC_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${NUGET_API_KEY:-}" ]; then
-            echo "::error::nuget.org did not return a temporary key. Check the Trusted Publishing policy is active and names repository owner 'DwainSnickles', repository 'RibbonWinForms' and workflow 'publish.yml'."
+          api_key="${SECRET_API_KEY:-$OIDC_API_KEY}"
+          if [ -z "$api_key" ]; then
+            echo "::error::There is no credential to push with. Either add a NUGET_API_KEY repository secret, or make the Trusted Publishing policy match this run: repository owner 'DwainSnickles', repository 'RibbonWinForms', workflow 'publish.yml'."
             exit 1
           fi
           # --skip-duplicate keeps a re-run of an already-published version green.
           for file in artifacts/*.nupkg artifacts/*.snupkg; do
-            dotnet nuget push "$file" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            dotnet nuget push "$file" --api-key "$api_key" --source https://api.nuget.org/v3/index.json --skip-duplicate
           done
 
       - name: Summary
@@ -172,7 +191,7 @@ jobs:
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Dry run: packed and verified, nothing pushed to nuget.org."
             else
-              echo "Pushed to nuget.org with a temporary key from Trusted Publishing. It appears in search a few minutes after the push."
+              echo "Pushed to nuget.org (${{ steps.credential.outputs.mode }}). It appears in search a few minutes after the push."
             fi
             echo
             echo "https://www.nuget.org/packages/${{ steps.version.outputs.pkgid }}/${{ steps.version.outputs.version }}"

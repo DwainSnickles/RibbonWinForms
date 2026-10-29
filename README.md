@@ -207,13 +207,17 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
 
 - `v1.2.3` publishes package version `1.2.3`; `v2.0.0-beta.1` publishes `2.0.0-beta.1`. A tag that is
   not `v<major>.<minor>.<patch>[-prerelease]` fails the run instead of publishing a guessed version.
-- **No API key is stored anywhere.** Publishing uses
+- **No API key is needed by default.** Publishing uses
   [Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing): the job
   presents a GitHub OIDC token and nuget.org exchanges it for a temporary key that lives for an hour.
   The policy that allows it is *RibbonLib publish* on nuget.org — owner `Dwains`, repository owner
   `DwainSnickles`, repository `RibbonWinForms`, workflow `publish.yml`. A policy starts with 7 days of
   temporary activation, so one successful publish is needed inside that window to make it permanent;
-  if it goes inactive, re-activate it from the policy's page. No `NUGET_API_KEY` secret is involved.
+  if it goes inactive, re-activate it from the policy's page.
+- **Fallback:** if a `NUGET_API_KEY` repository secret exists, the workflow pushes with it instead and
+  skips the OIDC login entirely. Use that when the policy cannot be made to match; delete the secret
+  to go back to the keyless path. The key needs scope *Push new packages and package versions* and a
+  glob matching `Dwain.RibbonLib`.
 - The package id and version both come from `RibbonLib.csproj` (`<PackageId>`, `<Version>`), so the
   workflow packs `Dwain.RibbonLib` — the id is not repeated in the workflow or in this section.
 - Run it by hand from **Actions → Publish NuGet package → Run workflow** with `dry_run: true` to pack
