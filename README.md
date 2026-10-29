@@ -1,6 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
+[![NuGet](https://img.shields.io/nuget/v/RibbonLib.Net10?color=green)](https://www.nuget.org/packages/RibbonLib.Net10)
 [![Download v1.0.0](https://img.shields.io/badge/download-v1.0.0-blue)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)
 
 **[Download RibbonLib.dll (v1.0.0)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)** — no NuGet package yet, so this is the built DLL, or add the project to your solution.
