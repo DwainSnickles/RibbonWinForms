@@ -1,7 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/badge/nuget-1.0.0--net10-blue)](https://www.nuget.org/packages/Dwain.RibbonLib)
+[![NuGet](https://img.shields.io/nuget/vpre/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
 
 **`dotnet add package Dwain.RibbonLib --version 1.0.0-net10`** — published on
 [nuget.org](https://www.nuget.org/packages/Dwain.RibbonLib); the DLL alone cannot go in the toolbox,
