@@ -820,7 +820,7 @@ namespace RibbonLib
 
             #endregion
 
-            int height = OwnerPanel.ContentBounds.Height - Owner.ItemPadding.Vertical - 4;
+            int height = OwnerPanel.ContentBounds.Height - EffectiveItemPadding.Vertical - 4;
             int scannedItems = 0;
             int widthSum = 1;
             int buttonHeight = 0;

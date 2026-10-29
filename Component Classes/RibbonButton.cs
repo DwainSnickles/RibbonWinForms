@@ -644,7 +644,7 @@ namespace RibbonLib
             {
                 if (Image != null)
                 {
-                    int marginTop = Owner == null ? 0 : Owner.ItemMargin.Top;
+                    int marginTop = Owner == null ? 0 : EffectiveItemMargin.Top;
                     return new Rectangle(
                     Bounds.Left + ((Bounds.Width - Image.Width) / 2),
                     Bounds.Top + marginTop,
@@ -660,7 +660,7 @@ namespace RibbonLib
                 if (SmallImage.PixelFormat != PixelFormat.DontCare)
                 {
                     return new Rectangle(
-                        Bounds.Left + Owner.ItemMargin.Left,
+                        Bounds.Left + EffectiveItemMargin.Left,
                         Bounds.Top + ((Bounds.Height - SmallImage.Height) / 2),
                         SmallImage.Width,
                         SmallImage.Height);
@@ -702,10 +702,10 @@ namespace RibbonLib
                 else
                 {
                     return Rectangle.FromLTRB(
-                        Bounds.Left + Owner.ItemMargin.Left,
-                        Bounds.Top + Owner.ItemMargin.Top + imgh,
-                        Bounds.Right - Owner.ItemMargin.Right,
-                        Bounds.Bottom - Owner.ItemMargin.Bottom);
+                        Bounds.Left + EffectiveItemMargin.Left,
+                        Bounds.Top + EffectiveItemMargin.Top + imgh,
+                        Bounds.Right - EffectiveItemMargin.Right,
+                        Bounds.Bottom - EffectiveItemMargin.Bottom);
                 }
             }
 
@@ -714,10 +714,10 @@ namespace RibbonLib
             int imageToTextSpacing = (sMode == RibbonElementSizeMode.DropDown) ? Owner.ItemImageToTextSpacing : 0;
 
             return Rectangle.FromLTRB(
-                Bounds.Left + imgw + Owner.ItemMargin.Horizontal + Owner.ItemMargin.Left + imageToTextSpacing,
-                Bounds.Top + Owner.ItemMargin.Top,
+                Bounds.Left + imgw + EffectiveItemMargin.Horizontal + EffectiveItemMargin.Left + imageToTextSpacing,
+                Bounds.Top + EffectiveItemMargin.Top,
                 Bounds.Right - ddw,
-                Bounds.Bottom - Owner.ItemMargin.Bottom);
+                Bounds.Bottom - EffectiveItemMargin.Bottom);
         }
 
         /// <summary>
@@ -746,7 +746,7 @@ namespace RibbonLib
                 case RibbonElementSizeMode.Large:
                 case RibbonElementSizeMode.Overflow:
                     return Rectangle.FromLTRB(bounds.Left,
-                        bounds.Top + Image.Height + Owner.ItemMargin.Vertical,
+                        bounds.Top + Image.Height + EffectiveItemMargin.Vertical,
                         bounds.Right, bounds.Bottom);
 
                 case RibbonElementSizeMode.DropDown:
@@ -856,9 +856,9 @@ namespace RibbonLib
             }
 
             RibbonElementSizeMode theSize = GetNearestSize(e.SizeMode);
-            int widthSum = Owner.ItemMargin.Horizontal;
-            int heightSum = Owner.ItemMargin.Vertical;
-            int largeHeight = OwnerPanel == null ? 0 : OwnerPanel.ContentBounds.Height - Owner.ItemPadding.Vertical;// -Owner.ItemMargin.Vertical; //58;
+            int widthSum = EffectiveItemMargin.Horizontal;
+            int heightSum = EffectiveItemMargin.Vertical;
+            int largeHeight = OwnerPanel == null ? 0 : OwnerPanel.ContentBounds.Height - EffectiveItemPadding.Vertical;// -EffectiveItemMargin.Vertical; //58;
 
             Size simg = SmallImage != null ? SmallImage.Size : Size.Empty;
             Size img = Image != null ? Image.Size : Size.Empty;
@@ -886,13 +886,13 @@ namespace RibbonLib
                 case RibbonElementSizeMode.DropDown:
                     sz = Size.Ceiling(e.Graphics.MeasureString(Text, Owner.Font));
                     if (!string.IsNullOrEmpty(Text)) widthSum += sz.Width + 1;
-                    widthSum += simg.Width + Owner.ItemMargin.Horizontal + Owner.ItemImageToTextSpacing;
+                    widthSum += simg.Width + EffectiveItemMargin.Horizontal + Owner.ItemImageToTextSpacing;
                     heightSum += Math.Max(sz.Height, simg.Height);
                     break;
                 case RibbonElementSizeMode.Medium:
                     sz = Size.Ceiling(e.Graphics.MeasureString(Text, Owner.Font));
                     if (!string.IsNullOrEmpty(Text)) widthSum += sz.Width + 1;
-                    widthSum += simg.Width + Owner.ItemMargin.Horizontal;
+                    widthSum += simg.Width + EffectiveItemMargin.Horizontal;
                     heightSum += Math.Max(sz.Height, simg.Height);
                     break;
                 case RibbonElementSizeMode.Compact:

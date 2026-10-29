@@ -41,10 +41,10 @@ namespace RibbonLib
                 Owner.Renderer.OnRenderRibbonItemText(new RibbonTextEventArgs(
                         Owner, e.Graphics, e.Clip, this,
                         Rectangle.FromLTRB(
-                            Bounds.Left + Owner.ItemMargin.Left,
-                            Bounds.Top + Owner.ItemMargin.Top,
-                            Bounds.Right - Owner.ItemMargin.Right,
-                            Bounds.Bottom - Owner.ItemMargin.Bottom), Text, FontStyle.Bold));
+                            Bounds.Left + EffectiveItemMargin.Left,
+                            Bounds.Top + EffectiveItemMargin.Top,
+                            Bounds.Right - EffectiveItemMargin.Right,
+                            Bounds.Bottom - EffectiveItemMargin.Bottom), Text, FontStyle.Bold));
             }
         }
 
@@ -65,7 +65,7 @@ namespace RibbonLib
                 else
                 {
                     Size sz = e.Graphics.MeasureString(Text, new Font(Owner.Font, FontStyle.Bold)).ToSize();
-                    SetLastMeasuredSize(new Size(sz.Width + Owner.ItemMargin.Horizontal + 1, sz.Height + Owner.ItemMargin.Vertical));
+                    SetLastMeasuredSize(new Size(sz.Width + EffectiveItemMargin.Horizontal + 1, sz.Height + EffectiveItemMargin.Vertical));
                 }
             }
             else
@@ -79,7 +79,7 @@ namespace RibbonLib
                 else
                 {
                     // A vertical separator on a Panel
-                    SetLastMeasuredSize(new Size(4, OwnerPanel.ContentBounds.Height - Owner.ItemPadding.Vertical - Owner.ItemMargin.Vertical));
+                    SetLastMeasuredSize(new Size(4, OwnerPanel.ContentBounds.Height - EffectiveItemPadding.Vertical - EffectiveItemMargin.Vertical));
                 }
             }
 

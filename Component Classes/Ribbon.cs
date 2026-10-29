@@ -159,6 +159,15 @@ namespace RibbonLib
 		private bool _useAlwaysStandardTheme;
 		private Theme _theme;
 		private Padding _panelMargin;
+		private Padding _tabContentMargin;
+		private Padding _tabTextMargin;
+		private Padding _tabsPadding;
+		private Padding _orbsPadding;
+		private Padding _panelPadding;
+		private Padding _itemPadding;
+		private Padding _itemMargin;
+		private bool _paddingCustomized;
+		private bool _applyingStyle;
 		private RibbonTab _activeTab;
 		private RibbonTab _lastSelectedTab;
 
@@ -235,6 +244,9 @@ namespace RibbonLib
 			Tabs = new RibbonTabCollection(this);
 			Contexts = new RibbonContextCollection(this);
 
+			// These are the factory defaults, not a choice made by the host: without this flag the
+			// padding properties would mark themselves as customized while the ribbon is constructed.
+			_applyingStyle = true;
 			OrbsPadding = new Padding(8, 5, 8, 3);
 			TabsPadding = new Padding(8, 5, 8, 3);
 			_tabsMargin = new Padding(12, 24 + 2, 20, 0);
@@ -250,6 +262,7 @@ namespace RibbonLib
 			ItemImageToTextSpacing = 3;
 			TabSpacing = DefaultTabSpacing;
 			DropDownMargin = new Padding(2);
+			_applyingStyle = false;
 			_renderer = new RibbonProfessionalRenderer(this);
 			_orbVisible = true;
 			OrbDropDown = new RibbonOrbDropDown(this);
@@ -907,8 +920,24 @@ namespace RibbonLib
 			set
 			{
 				var changed = value != Theme.Style;
+
+				// Spacing chosen by hand survives a style change: the style blocks below assign their
+				// own values, so keep the current ones and put them back afterwards.
+				Padding customContent = _tabContentMargin;
+				Padding customTabs = _tabsPadding;
+				Padding customOrbs = _orbsPadding;
+				Padding customTabText = _tabTextMargin;
+				Padding customPanelPadding = _panelPadding;
+				Padding customPanelMargin = _panelMargin;
+				Padding customItemPadding = _itemPadding;
+				Padding customItemMargin = _itemMargin;
+
 				EnsureCustomThemeCreated(value, ThemeColor);
 				Theme.Style = value;
+
+				// The assignments below go through the padding properties, which would otherwise mark the
+				// spacing as chosen by hand.
+				_applyingStyle = true;
 				if (value == RibbonOrbStyle.Office_2007)
 				{
 					TabsPadding = new Padding(8, 4, 8, 4);
@@ -985,6 +1014,20 @@ namespace RibbonLib
 					ItemImageToTextSpacing = 11;
 					this.OrbDropDown.BorderRoundness = 2;
 				}
+				_applyingStyle = false;
+
+				if (_paddingCustomized)
+				{
+					_tabContentMargin = customContent;
+					_tabsPadding = customTabs;
+					_orbsPadding = customOrbs;
+					_tabTextMargin = customTabText;
+					_panelPadding = customPanelPadding;
+					_panelMargin = customPanelMargin;
+					_itemPadding = customItemPadding;
+					_itemMargin = customItemMargin;
+				}
+
 				UpdateRegions();
 				Invalidate();
 				if (changed)
@@ -1253,8 +1296,19 @@ namespace RibbonLib
 		/// <summary>
 		/// Gets or sets the internal spacing between the tab and its text
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding TabTextMargin { get; set; }
+		[Category("Padding")]
+		[Description("Space between a tab's text and the edges of the tab.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding TabTextMargin
+		{
+			get => _tabTextMargin;
+			set
+			{
+				if (_tabTextMargin == value) return;
+				_tabTextMargin = value;
+				OnPaddingChanged();
+			}
+		}
 
 		/// <summary> 
 		/// Gets or sets the margis of the DropDowns shown by the Ribbon
@@ -1265,8 +1319,19 @@ namespace RibbonLib
 		/// <summary>
 		/// Gets or sets the external spacing of items on panels
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding ItemPadding { get; set; }
+		[Category("Padding")]
+		[Description("Space around each control (button, combo box...) inside a panel.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding ItemPadding
+		{
+			get => _itemPadding;
+			set
+			{
+				if (_itemPadding == value) return;
+				_itemPadding = value;
+				OnPaddingChanged();
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the padding between the image and text on a drop down RibbonItem.
@@ -1277,8 +1342,19 @@ namespace RibbonLib
 		/// <summary>
 		/// Gets or sets the internal spacing of items
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding ItemMargin { get; set; }
+		[Category("Padding")]
+		[Description("Space between the contents of a control and its edges.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding ItemMargin
+		{
+			get => _itemMargin;
+			set
+			{
+				if (_itemMargin == value) return;
+				_itemMargin = value;
+				OnPaddingChanged();
+			}
+		}
 
         /// <summary>
         /// Gets or sets the tab that is currently active
@@ -1336,17 +1412,35 @@ namespace RibbonLib
 		/// <summary>
 		/// Gets or sets the external spacing of panels inside of tabs
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding PanelPadding { get; set; }
+		[Category("Padding")]
+		[Description("Space around each panel, between it and the tab edges and its neighbours.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding PanelPadding
+		{
+			get => _panelPadding;
+			set
+			{
+				if (_panelPadding == value) return;
+				_panelPadding = value;
+				OnPaddingChanged();
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the internal spacing of panels inside of tabs
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		[Category("Padding")]
+		[Description("Space inside each panel. The bottom value is the height of the panel caption.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
 		public Padding PanelMargin
 		{
 			get => _panelMargin;
-			set => _panelMargin = value;
+			set
+			{
+				if (_panelMargin == value) return;
+				_panelMargin = value;
+				OnPaddingChanged();
+			}
 		}
 
 		/// <summary>
@@ -1417,10 +1511,62 @@ namespace RibbonLib
 		}
 
 		/// <summary>
-		/// Gets or sets the internal spacing of the tab content pane
+		/// Gets or sets the internal spacing of the tab content pane.
+		/// This is what the <see cref="Padding"/> property of the ribbon edits.
 		/// </summary>
 		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding TabContentMargin { get; set; }
+		public Padding TabContentMargin
+		{
+			get => _tabContentMargin;
+			set
+			{
+				if (_tabContentMargin == value) return;
+				_tabContentMargin = value;
+				OnPaddingChanged();
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the space between the edges of the ribbon and the content below the tabs.
+		/// This is the standard Padding property of the control, wired to the ribbon layout instead
+		/// of being ignored by it.
+		/// </summary>
+		[Category("Padding")]
+		[Description("Space between the edges of the ribbon and the panels below the tabs.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public new Padding Padding
+		{
+			get => _tabContentMargin;
+			set
+			{
+				if (_tabContentMargin == value) return;
+				_tabContentMargin = value;
+				OnPaddingChanged();
+			}
+		}
+
+		/// <summary>
+		/// Remembers that the host chose the spacing by hand, so a later style change does not undo it,
+		/// and lays the ribbon out again.
+		/// </summary>
+		private void OnPaddingChanged()
+		{
+			if (!_applyingStyle)
+			{
+				_paddingCustomized = true;
+			}
+
+			if (IsDisposed || _updatingSuspended) return;
+
+			// Before the handle exists there is nothing to measure, and the layout runs again
+			// when the ribbon is created or resized.
+			if (IsHandleCreated)
+			{
+				UpdateRegions();
+			}
+
+			Invalidate();
+		}
 
 		/// <summary>
 		/// Gets or sets the external spacing of the tabs content pane
@@ -1444,16 +1590,38 @@ namespace RibbonLib
 		}
 
 		/// <summary>
-		/// Gets a value indicating the internal spacing of tabs
+		/// Gets or sets the internal spacing of tabs
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding TabsPadding { get; set; }
+		[Category("Padding")]
+		[Description("Space inside each tab, around its text.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding TabsPadding
+		{
+			get => _tabsPadding;
+			set
+			{
+				if (_tabsPadding == value) return;
+				_tabsPadding = value;
+				OnPaddingChanged();
+			}
+		}
 
 		/// <summary>
-		/// Gets a value indicating the internal spacing of the orb
+		/// Gets or sets the internal spacing of the orb
 		/// </summary>
-		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public Padding OrbsPadding { get; set; }
+		[Category("Padding")]
+		[Description("Space inside the orb, around its text.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding OrbsPadding
+		{
+			get => _orbsPadding;
+			set
+			{
+				if (_orbsPadding == value) return;
+				_orbsPadding = value;
+				OnPaddingChanged();
+			}
+		}
 
 		/// <summary>
 		/// Overriden. The maximum size is fixed

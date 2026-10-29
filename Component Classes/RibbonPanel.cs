@@ -34,6 +34,9 @@ namespace RibbonLib
 		private bool _buttonMoreEnabled;
 		internal Rectangle overflowBoundsBuffer;
 		private bool _visible = true;
+		private Padding? _itemPadding;
+		private Padding? _itemMargin;
+		private Padding? _panelMargin;
 
 		#endregion
 
@@ -329,6 +332,102 @@ namespace RibbonLib
 		public RibbonItemCollection Items { get; }
 
 		/// <summary>
+		/// Gets or sets the space around the controls of this panel, overriding the ribbon's
+		/// <see cref="Ribbon.ItemPadding"/>. Leave it blank to use the ribbon's value.
+		/// </summary>
+		[Category("Padding")]
+		[Description("Space around the controls of this panel. Leave blank to use the ribbon's ItemPadding.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding? ItemPadding
+		{
+			get => _itemPadding;
+			set
+			{
+				if (_itemPadding == value) return;
+				_itemPadding = value;
+				OnPaddingChanged();
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the space inside the controls of this panel, overriding the ribbon's
+		/// <see cref="Ribbon.ItemMargin"/>. Leave it blank to use the ribbon's value.
+		/// </summary>
+		[Category("Padding")]
+		[Description("Space inside the controls of this panel. Leave blank to use the ribbon's ItemMargin.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding? ItemMargin
+		{
+			get => _itemMargin;
+			set
+			{
+				if (_itemMargin == value) return;
+				_itemMargin = value;
+				OnPaddingChanged();
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the space inside this panel, overriding the ribbon's
+		/// <see cref="Ribbon.PanelMargin"/>. The bottom value is the height of this panel's caption.
+		/// Leave it blank to use the ribbon's value.
+		/// </summary>
+		[Category("Padding")]
+		[Description("Space inside this panel; the bottom value is its caption height. Leave blank to use the ribbon's PanelMargin.")]
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+		public Padding? PanelMargin
+		{
+			get => _panelMargin;
+			set
+			{
+				if (_panelMargin == value) return;
+				_panelMargin = value;
+				OnPaddingChanged();
+			}
+		}
+
+		/// <summary>
+		/// Gets the space this panel keeps around its controls: its own value, or the ribbon's.
+		/// </summary>
+		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		internal Padding EffectiveItemPadding => _itemPadding ?? GetRibbonPadding(p => p.ItemPadding);
+
+		/// <summary>
+		/// Gets the space inside the controls of this panel: its own value, or the ribbon's.
+		/// </summary>
+		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		internal Padding EffectiveItemMargin => _itemMargin ?? GetRibbonPadding(p => p.ItemMargin);
+
+		/// <summary>
+		/// Gets the space inside this panel: its own value, or the ribbon's.
+		/// </summary>
+		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		internal Padding EffectivePanelMargin => _panelMargin ?? GetRibbonPadding(p => p.PanelMargin);
+
+		/// <summary>
+		/// Reads the value the ribbon would use when this panel has no value of its own.
+		/// </summary>
+		private Padding GetRibbonPadding(Func<Ribbon, Padding> value)
+		{
+			return Owner == null ? Padding.Empty : value(Owner);
+		}
+
+		/// <summary>
+		/// Lays the ribbon out again after a spacing value changed.
+		/// </summary>
+		private void OnPaddingChanged()
+		{
+			if (Owner == null || Owner.IsDisposed) return;
+
+			if (Owner.IsHandleCreated)
+			{
+				Owner.UpdateRegions();
+			}
+
+			Owner.Invalidate();
+		}
+
+		/// <summary>
 		/// Gets or sets the text that is to be displayed on the bottom of the panel
 		/// </summary>
 		[Category("Appearance")]
@@ -536,10 +635,10 @@ namespace RibbonLib
 			{
 				//Update contentBounds
 				ContentBounds = Rectangle.FromLTRB(
-					bounds.X + Owner.PanelMargin.Left + 0,
-					bounds.Y + Owner.PanelMargin.Top + 0,
-					bounds.Right - Owner.PanelMargin.Right,
-					bounds.Bottom - Owner.PanelMargin.Bottom);
+					bounds.X + EffectivePanelMargin.Left + 0,
+					bounds.Y + EffectivePanelMargin.Top + 0,
+					bounds.Right - EffectivePanelMargin.Right,
+					bounds.Bottom - EffectivePanelMargin.Bottom);
 			}
 
 			//"More" bounds
@@ -577,7 +676,7 @@ namespace RibbonLib
 
 			#region Measure width of minSize
 
-			minSize.Width = e.Graphics.MeasureString(Text, Owner.Font).ToSize().Width + Owner.PanelMargin.Horizontal + 1;
+			minSize.Width = e.Graphics.MeasureString(Text, Owner.Font).ToSize().Width + EffectivePanelMargin.Horizontal + 1;
 
 			if (ButtonMoreVisible)
 			{
@@ -590,7 +689,7 @@ namespace RibbonLib
 			{
 				Size textSize = RibbonButton.MeasureStringLargeSize(e.Graphics, Text, Owner.Font);
 
-				return new Size(textSize.Width + Owner.PanelMargin.Horizontal, panelHeight);
+				return new Size(textSize.Width + EffectivePanelMargin.Horizontal, panelHeight);
 			}
 
 			switch (FlowsTo)
@@ -676,7 +775,7 @@ namespace RibbonLib
 		/// <returns></returns>
 		private Size MeasureSizeFlowsToRight(object sender, RibbonElementMeasureSizeEventArgs e)
 		{
-			int widthSum = Owner.PanelMargin.Horizontal;
+			int widthSum = EffectivePanelMargin.Horizontal;
 			int maxWidth = 0;
 			int maxHeight = 0;
 			int dividedWidth = 0;
@@ -687,7 +786,7 @@ namespace RibbonLib
 				{
 					Size itemSize = item.MeasureSize(this, e);
 
-					widthSum += itemSize.Width + Owner.ItemPadding.Horizontal + 1;
+					widthSum += itemSize.Width + EffectiveItemPadding.Horizontal + 1;
 
 					maxWidth = Math.Max(maxWidth, itemSize.Width);
 					maxHeight = Math.Max(maxHeight, itemSize.Height);
@@ -710,9 +809,9 @@ namespace RibbonLib
 			}
 
 			//Add padding
-			dividedWidth += Owner.PanelMargin.Horizontal;
+			dividedWidth += EffectivePanelMargin.Horizontal;
 
-			return new Size(Math.Max(maxWidth, dividedWidth) + Owner.PanelMargin.Horizontal, 0); //Height is provided by MeasureSize
+			return new Size(Math.Max(maxWidth, dividedWidth) + EffectivePanelMargin.Horizontal, 0); //Height is provided by MeasureSize
 		}
 
 		/// <summary>
@@ -723,11 +822,11 @@ namespace RibbonLib
 		/// <returns></returns>
 		private Size MeasureSizeFlowsToBottom(object sender, RibbonElementMeasureSizeEventArgs e)
 		{
-			int curRight = Owner.PanelMargin.Left + Owner.ItemPadding.Horizontal;
-			int curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical;
+			int curRight = EffectivePanelMargin.Left + EffectiveItemPadding.Horizontal;
+			int curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical;
 			int lastRight = 0;
 			int lastBottom = 0;
-			int availableHeight = OwnerTab.TabContentBounds.Height - Owner.TabContentMargin.Vertical - Owner.PanelPadding.Vertical - Owner.PanelMargin.Vertical;
+			int availableHeight = OwnerTab.TabContentBounds.Height - Owner.TabContentMargin.Vertical - Owner.PanelPadding.Vertical - EffectivePanelMargin.Vertical;
 			int maxRight = 0;
 			int maxBottom = 0;
 
@@ -739,8 +838,8 @@ namespace RibbonLib
 
 					if (curBottom + itemSize.Height > ContentBounds.Bottom)
 					{
-						curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical + 0;
-						curRight = maxRight + Owner.ItemPadding.Horizontal + 0;
+						curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical + 0;
+						curRight = maxRight + EffectiveItemPadding.Horizontal + 0;
 					}
 
 					Rectangle bounds = new Rectangle(curRight, curBottom, itemSize.Width, itemSize.Height);
@@ -748,14 +847,14 @@ namespace RibbonLib
 					lastRight = bounds.Right;
 					lastBottom = bounds.Bottom;
 
-					curBottom = bounds.Bottom + Owner.ItemPadding.Vertical + 1;
+					curBottom = bounds.Bottom + EffectiveItemPadding.Vertical + 1;
 
 					maxRight = Math.Max(maxRight, lastRight);
 					maxBottom = Math.Max(maxBottom, lastBottom);
 				}
 			}
 
-			return new Size(maxRight + Owner.ItemPadding.Right + Owner.PanelMargin.Right + 1, 0); //Height is provided by MeasureSize
+			return new Size(maxRight + EffectiveItemPadding.Right + EffectivePanelMargin.Right + 1, 0); //Height is provided by MeasureSize
 		}
 
 		/// <summary>
@@ -819,8 +918,8 @@ namespace RibbonLib
 		/// </summary>
 		private void UpdateRegionsFlowsToBottom(Graphics g, RibbonElementSizeMode mode)
 		{
-			int curRight = ContentBounds.Left + Owner.ItemPadding.Horizontal + 0;
-			int curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical + 0;
+			int curRight = ContentBounds.Left + EffectiveItemPadding.Horizontal + 0;
+			int curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical + 0;
 			int lastRight = curRight;
 			int lastBottom = 0;
 			List<RibbonItem> lastColumn = new List<RibbonItem>();
@@ -838,8 +937,8 @@ namespace RibbonLib
 				//If not enough space available, reset curBottom and advance curRight
 				if (curBottom + itemSize.Height > ContentBounds.Bottom)
 				{
-					curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical + 0;
-					curRight = lastRight + Owner.ItemPadding.Horizontal + 0;
+					curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical + 0;
+					curRight = lastRight + EffectiveItemPadding.Horizontal + 0;
 					Items.CenterItemsVerticallyInto(lastColumn, ContentBounds);
 					lastColumn.Clear();
 				}
@@ -852,7 +951,7 @@ namespace RibbonLib
 				lastBottom = item.Bounds.Bottom;
 
 				//update current bottom
-				curBottom = item.Bounds.Bottom + Owner.ItemPadding.Vertical + 1;
+				curBottom = item.Bounds.Bottom + EffectiveItemPadding.Vertical + 1;
 
 				//Add to the collection of items of the last column
 				lastColumn.Add(item);
@@ -867,8 +966,8 @@ namespace RibbonLib
 		/// </summary>
 		private void UpdateRegionsFlowsToLeft(Graphics g, RibbonElementSizeMode mode)
 		{
-			int curRight = ContentBounds.Left + Owner.ItemPadding.Horizontal + 0;
-			int curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical + 0;
+			int curRight = ContentBounds.Left + EffectiveItemPadding.Horizontal + 0;
+			int curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical + 0;
 			int lastRight = curRight;
 			int lastBottom = 0;
 			List<RibbonItem> lastColumn = new List<RibbonItem>();
@@ -888,8 +987,8 @@ namespace RibbonLib
 				//If not enough space available, reset curBottom and advance curRight
 				if (curBottom + itemSize.Height > ContentBounds.Bottom)
 				{
-					curBottom = ContentBounds.Top + Owner.ItemPadding.Vertical + 0;
-					curRight = lastRight + Owner.ItemPadding.Horizontal + 0;
+					curBottom = ContentBounds.Top + EffectiveItemPadding.Vertical + 0;
+					curRight = lastRight + EffectiveItemPadding.Horizontal + 0;
 					Items.CenterItemsVerticallyInto(lastColumn, ContentBounds);
 					lastColumn.Clear();
 				}
@@ -902,7 +1001,7 @@ namespace RibbonLib
 				lastBottom = item.Bounds.Bottom;
 
 				//update current bottom
-				curBottom = item.Bounds.Bottom + Owner.ItemPadding.Vertical + 1;
+				curBottom = item.Bounds.Bottom + EffectiveItemPadding.Vertical + 1;
 
 				//Add to the collection of items of the last column
 				lastColumn.Add(item);
@@ -954,14 +1053,14 @@ namespace RibbonLib
 				if (curLeft + item.LastMeasuredSize.Width > ContentBounds.Right)
 				{
 					curLeft = ContentBounds.Left;
-					curTop = maxBottom + Owner.ItemPadding.Vertical + 1 + padding;
+					curTop = maxBottom + EffectiveItemPadding.Vertical + 1 + padding;
 				}
 
 				//Set item's bounds
 				item.SetBounds(new Rectangle(new Point(curLeft, curTop), item.LastMeasuredSize));
 
 				//Increment reminders
-				curLeft += item.Bounds.Width + Owner.ItemPadding.Horizontal;
+				curLeft += item.Bounds.Width + EffectiveItemPadding.Horizontal;
 				maxBottom = Math.Max(maxBottom, item.Bounds.Bottom);
 
 				//Check available space after placing item
@@ -975,7 +1074,7 @@ namespace RibbonLib
 					{
 						//Place the item there and reset the counter to check for further items
 						list[i].SetBounds(new Rectangle(new Point(curLeft, curTop), list[i].LastMeasuredSize));
-						curLeft += list[i].Bounds.Width + Owner.ItemPadding.Horizontal;
+						curLeft += list[i].Bounds.Width + EffectiveItemPadding.Horizontal;
 						maxBottom = Math.Max(maxBottom, list[i].Bounds.Bottom);
 						spaceAvailable = ContentBounds.Right - curLeft;
 						list.RemoveAt(i);

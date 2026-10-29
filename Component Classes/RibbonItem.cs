@@ -624,6 +624,19 @@ namespace RibbonLib
         public RibbonItem OwnerItem { get; private set; }
 
         /// <summary>
+        /// Gets the space around this item: the space its panel asks for, or the ribbon's when the
+        /// item is not on a panel (quick access toolbar, orb menu, drop-down).
+        /// </summary>
+        internal Padding EffectiveItemPadding =>
+            OwnerPanel != null ? OwnerPanel.EffectiveItemPadding : (Owner != null ? Owner.ItemPadding : Padding.Empty);
+
+        /// <summary>
+        /// Gets the space inside this item: the space its panel asks for, or the ribbon's.
+        /// </summary>
+        internal Padding EffectiveItemMargin =>
+            OwnerPanel != null ? OwnerPanel.EffectiveItemMargin : (Owner != null ? Owner.ItemMargin : Padding.Empty);
+
+        /// <summary>
         /// Gets or sets the maximum size mode of the element
         /// </summary>
         [DefaultValue(RibbonElementSizeMode.None)]

@@ -88,6 +88,52 @@ Use `RibbonForm` instead of `Form` if you want the ribbon merged into a glass ca
 5. For collections (`Tabs`, `Panels`, `Items`, orb collections, `Buttons`, quick access items), use the
    collection editor from the Properties window — add, remove and reorder there.
 
+## Spacing and padding
+
+The ribbon's spacing is editable. Select the ribbon and every value appears under the **Padding**
+category in the Properties window; each one takes effect as you type it and is written into
+`Form1.Designer.cs` like any other property.
+
+| Property | What it pads |
+|---|---|
+| `Padding` | The content area below the tabs — the ribbon's own padding |
+| `TabsPadding` | Inside each tab, around its text |
+| `OrbsPadding` | Inside the orb, around its text |
+| `TabTextMargin` | Between a tab's text and the tab edge |
+| `PanelPadding` | Around each panel, between it and its neighbours |
+| `PanelMargin` | Inside each panel; the bottom value is the caption height |
+| `ItemPadding` | Around each control (button, combo box…) inside a panel |
+| `ItemMargin` | Inside each control, between its content and its edge |
+
+```csharp
+ribbon.Padding = new Padding(12, 4, 12, 6);   // breathing room around the panel area
+ribbon.ItemPadding = new Padding(6);          // space around every control in every panel
+```
+
+Padding you set by hand survives a change of `OrbStyle`: the style change still updates colours,
+roundness and everything else, but leaves your spacing alone. A ribbon you have not touched keeps
+taking the style's own spacing defaults.
+
+### Per-panel spacing
+
+A panel can use its own spacing instead of the ribbon's. Select the panel and set any of these. A
+blank value means *use the ribbon's*, and clearing the cell goes back to inheriting.
+
+| Panel property | Overrides | Notes |
+|---|---|---|
+| `ItemPadding` | the ribbon's `ItemPadding` | Space around the controls of this panel |
+| `ItemMargin` | the ribbon's `ItemMargin` | Space inside the controls of this panel |
+| `PanelMargin` | the ribbon's `PanelMargin` | Space inside the panel; the bottom value is this panel's caption height |
+
+```csharp
+roomyPanel.ItemPadding = new Padding(14, 6, 14, 6);   // only this panel gets air
+busyPanel.ItemPadding = new Padding(2, 0, 2, 0);     // and this one stays tight
+busyPanel.ItemPadding = null;                        // back to the ribbon's value
+```
+
+`PanelPadding` — the gap *between* panels inside a tab — stays ribbon-wide, because it belongs to
+the space between panels rather than to any one of them.
+
 ## Building
 
 ```
