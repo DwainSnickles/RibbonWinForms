@@ -12,20 +12,22 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.1-net10</Version>
+	<Version>1.0.2-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
     <!-- First sentence is the tagline used for the repository description, so the package page and
          the GitHub sidebar say the same thing. -->
     <Description>Office-style ribbon for Windows Forms, ported to .NET 10 with working out-of-process designer support. A fork of RibbonWinForms. It also builds for .NET 8. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar are all editable in the designer, and no design-time tooling is needed at runtime.</Description>
-    <PackageTags>winforms;ribbon;office-ribbon;windows-forms;ribbon-control;dotnet;net8;net10;winforms-designer;gui</PackageTags>
+    <!-- Hyphenated because nuget.org splits tags on spaces and semicolons: "Windows Ribbon" has to be
+         windows-ribbon to survive as one tag. The same words are used as GitHub topics. -->
+    <PackageTags>winforms;ribbon;ribbon-framework;ribbon-control;ribbon-tools;windows-ribbon;win-ribbon;office-ribbon;windows-forms;winforms-designer;gui;dotnet;net8;net10</PackageTags>
     <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Description aligned with the project tagline and the fork credited the way it is on GitHub. Carries the same .NET 10 port as 1.0.0-net10: a working out-of-process designer, selectable tabs/panels/items, Add Tab / Add Panel / Add Control pills, collection editors in the Properties grid, and no design-time assembly loaded at runtime.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds discoverability tags — ribbon-framework, ribbon-tools, windows-ribbon, win-ribbon — alongside the existing winforms, ribbon, office-ribbon and windows-forms tags. Same library as 1.0.1-net10: a working out-of-process designer, selectable tabs/panels/items, Add Tab / Add Panel / Add Control pills, collection editors in the Properties grid, and no design-time assembly loaded at runtime.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

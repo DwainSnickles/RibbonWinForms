@@ -3,7 +3,7 @@
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
 
-**`dotnet add package Dwain.RibbonLib --version 1.0.1-net10`** — published on
+**`dotnet add package Dwain.RibbonLib --version 1.0.2-net10`** — published on
 [nuget.org](https://www.nuget.org/packages/Dwain.RibbonLib); the DLL alone cannot go in the toolbox,
 the package is what puts it there.
 
@@ -176,10 +176,10 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.1-net10
+dotnet add package Dwain.RibbonLib --version 1.0.2-net10
 ```
 
-The package is on nuget.org, so no local feed is needed. `1.0.1-net10` is a prerelease, which is why
+The package is on nuget.org, so no local feed is needed. `1.0.2-net10` is a prerelease, which is why
 the version has to be given exactly; a local build can still be packed into your own feed with
 `dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
