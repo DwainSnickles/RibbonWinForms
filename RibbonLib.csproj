@@ -8,8 +8,33 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>RibbonLib.Net10</PackageId>
+    <Version>1.0.0</Version>
+    <Title>RibbonLib for .NET 10</Title>
+    <Authors>DwainSnickles;Jose Menendez Poo</Authors>
+    <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
+    <Description>Office-style ribbon control for Windows Forms on .NET 10, with working out-of-process Visual Studio designer support. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar, all editable in the designer. No design-time tooling is needed at runtime. A fork of RibbonWinForms (MS-PL).</Description>
+    <PackageTags>winforms;ribbon;office-ribbon;windows-forms;ribbon-control;dotnet;net10;winforms-designer;gui</PackageTags>
+    <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>First release: the .NET 10 port, with a working out-of-process designer, selectable tabs/panels/items, Add Tab / Add Panel / Add Control pills, collection editors in the Properties grid, and no design-time assembly loaded at runtime.</PackageReleaseNotes>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.WinForms.Designer.SDK" Version="1.6.0" />
+    <!-- Compile-time only: the design server ships with Visual Studio, never with this package. -->
+    <PackageReference Include="Microsoft.WinForms.Designer.SDK" Version="1.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
