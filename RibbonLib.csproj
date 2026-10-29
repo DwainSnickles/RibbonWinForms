@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Built for .NET 10 and for .NET 8: hosts that have not moved yet can still use the control.
+         Nothing here is 10-only, and the designer assembly follows suit. -->
+    <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -43,11 +45,6 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="RibbonLib.targets" Pack="true" PackagePath="build\RibbonLib.Net10.targets" />
-    <None Include="RibbonLib.targets" Pack="true" PackagePath="buildTransitive\RibbonLib.Net10.targets" />
-  </ItemGroup>
-
   <PropertyGroup>
     <!-- The design half is added to the package during packing, not by an item declared above:
          items are evaluated before any target runs, so a declared path would be missing on a cold
@@ -60,13 +57,18 @@
 
   <Target Name="AddDesignAssemblyToPackage">
     <!-- A plain `dotnet pack` builds the designer first, so the package cannot ship a stale one.
-         Packing with NoBuild (the publish workflow) expects both projects to be built already. -->
+         Packing with NoBuild (the publish workflow) expects both projects to be built already.
+         This target runs once per target framework, and the designer is built for that same
+         framework: a net8 host is served by a net8 design server, so it needs a net8 designer. -->
     <MSBuild Projects="RibbonLib.Design\RibbonLib.Design.csproj" Targets="Build"
-             Properties="Configuration=$(Configuration);Version=$(Version)"
+             Properties="Configuration=$(Configuration);Version=$(Version);TargetFramework=$(TargetFramework)"
              Condition="'$(NoBuild)' != 'true'" />
     <ItemGroup>
-      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\net10.0-windows\RibbonLib.Design.dll">
-        <PackagePath>tools\net10.0-windows\</PackagePath>
+      <!-- In lib/, next to the runtime assembly: the Visual Studio design server is only told about
+           assemblies the project resolves as references, so a designer parked in tools/ is copied to
+           bin and then ignored - the ribbon is hosted as a bare component and draws nothing. -->
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\$(TargetFramework)\RibbonLib.Design.dll">
+        <PackagePath>lib\$(TargetFramework)$(TargetPlatformVersion)\</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>

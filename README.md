@@ -10,7 +10,8 @@ both at runtime and inside the **out-of-process WinForms designer** that current
 
 This is a fork of [RibbonWinForms](https://github.com/RibbonWinForms/RibbonWinForms) (MS-PL, originally
 by Jose Menendez Poo). Upstream targets .NET Framework 4.8; this fork moves the library to
-`net10.0-windows` and fixes the things that port broke.
+`net10.0-windows` (and also builds `net8.0-windows` for hosts that have not moved yet) and fixes the
+things that port broke.
 
 ![The ribbon rendered by this library: orb, tabs, three panels with items, and panel footers](docs/ribbon.png)
 
@@ -49,9 +50,20 @@ because the designers were public types inside it.
 
 | | |
 |---|---|
-| Runtime | Windows, .NET 10 (`net10.0-windows`) — nothing else |
+| Runtime | Windows 10 1607 or later, on .NET 8 (`net8.0-windows`) or .NET 10 (`net10.0-windows`) |
 | Design-time | Visual Studio with the WinForms designer (the out-of-process design server) |
-| Build | .NET 10 SDK |
+| Build | .NET 8 SDK or later (the solution builds both target frameworks) |
+
+**Why the assemblies say `windows7.0`.** The `7.0` in `net10.0-windows7.0` is the Windows API surface
+the compiler targets, not a runtime floor — it is what the project's *Target OS version* shows. The
+control itself uses only `user32`, `gdi32`, `uxtheme` and `dwmapi`, and its OS checks are "Vista or
+later", so Windows 7 would satisfy the control. It cannot satisfy the runtime: .NET 8 and .NET 10 are
+supported on Windows 10 1607+ and Windows 11 only, so that is the real floor
+([supported OS list](https://github.com/dotnet/core/blob/main/release-notes/8.0/supported-os.md)).
+Supporting Windows 7 would mean .NET Framework 4.x, which is what upstream targets.
+
+A host targeting a newer platform version, such as `net8.0-windows10.0.19041.0`, still resolves these
+builds: a higher platform version accepts a package built for a lower one.
 
 `RibbonLib.Design` compiles against `Microsoft.WinForms.Designer.SDK` 1.6.0, which supplies the
 design-time types at compile time only. At design time the code runs against whichever design-tools
@@ -219,9 +231,12 @@ Two assemblies, so the boundary is a compile-time fact rather than a convention:
 The pieces talk to each other through `InternalsVisibleTo("RibbonLib.Design")`, and every designer or
 editor is referenced from an attribute as `"…, RibbonLib.Design"`.
 
-A project that references the library gets `RibbonLib.Design.dll` in its output through a small
-targets file (`RibbonLib.targets`); the NuGet package ships the assembly under `tools/` and copies it
-the same way, so it never becomes a reference of the consuming code.
+The package ships both assemblies side by side in `lib/<tfm>/`, so `RibbonLib.Design.dll` arrives as an
+ordinary reference. That is deliberate: the Visual Studio design server is only told about assemblies
+the project resolves as references. Shipping the designer under `tools/` and copying it in a build
+target puts the file in `bin\` but leaves it invisible to the designer, which then hosts the ribbon as
+a bare component that never draws itself. The runtime assembly still carries no design-tools
+reference, and nothing loads `RibbonLib.Design.dll` at run time.
 
 ## Known limitations
 
