@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Permissions;
 using System.Windows.Forms;
-using RibbonLib.RibbonDesign;
 using RibbonLib.RibbonHelpers;
 
 namespace RibbonLib
@@ -12,7 +11,7 @@ namespace RibbonLib
     // Named rather than typeof(...): a type token makes every runtime resolution of this
     // attribute demand Microsoft.DotNet.DesignTools.Server, which does not exist outside
     // Visual Studio. See Ribbon.cs for the same change.
-    [Designer("RibbonLib.RibbonDesign.RibbonDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonDesign.RibbonDesigner, RibbonLib.Design")]
     public partial class RibbonForm : Form, IRibbonForm
     {
         #region Fields

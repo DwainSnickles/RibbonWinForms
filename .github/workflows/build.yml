@@ -26,15 +26,18 @@ jobs:
       - name: Show SDK version
         run: dotnet --version
 
+      # Building the design assembly rebuilds RibbonLib first, so one step covers both halves.
       - name: Restore
-        run: dotnet restore RibbonLib.csproj
+        run: dotnet restore RibbonLib.Design/RibbonLib.Design.csproj
 
       - name: Build
-        run: dotnet build RibbonLib.csproj -c Release --no-restore
+        run: dotnet build RibbonLib.Design/RibbonLib.Design.csproj -c Release --no-restore
 
-      - name: Upload assembly
+      - name: Upload assemblies
         uses: actions/upload-artifact@v4
         with:
           name: RibbonLib-net10
-          path: bin/Release/net10.0-windows/RibbonLib.dll
+          path: |
+            bin/Release/net10.0-windows/RibbonLib.dll
+            RibbonLib.Design/bin/Release/net10.0-windows/RibbonLib.Design.dll
           if-no-files-found: error

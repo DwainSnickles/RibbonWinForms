@@ -15,7 +15,6 @@ using System.Drawing;
 using System.Drawing.Design;
 using System.Drawing.Drawing2D;
 using RibbonLib.Collections;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
@@ -232,14 +231,14 @@ namespace RibbonLib
         /// <summary>
         /// Gets the collection of items shown in the menu area
         /// </summary>
-        [Editor("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonOrbMenuItemCollection MenuItems { get; }
 
         /// <summary>
         /// Gets the collection of items shown in the options area (bottom)
         /// </summary>
-        [Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonOrbOptionButtonCollection OptionItems { get; }
 
@@ -251,7 +250,7 @@ namespace RibbonLib
         /// Gets the collection of items shown in the recent items area
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         public RibbonOrbRecentItemCollection RecentItems { get; }
 
         /// <summary>

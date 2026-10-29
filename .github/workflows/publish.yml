@@ -58,8 +58,14 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Packing version $version"
 
+      # Both halves are built here: the runtime library, then the design assembly that the package
+      # ships in tools/ and copies to the app output. `pack --no-build` then only packs.
       - name: Build
-        run: dotnet build RibbonLib.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build RibbonLib.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
+          dotnet build RibbonLib.Design/RibbonLib.Design.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
 
       - name: Pack
         run: dotnet pack RibbonLib.csproj -c Release --no-build -o artifacts -p:Version=${{ steps.version.outputs.version }}
@@ -76,7 +82,15 @@ jobs:
               names = z.namelist()
               dlls = [n for n in names if n.startswith("lib/") and n.endswith("RibbonLib.dll")]
               assert dlls, f"no lib/*/RibbonLib.dll in {names}"
+              assert "tools/net10.0-windows/RibbonLib.Design.dll" in names, \
+                  f"the designer is not in the package: {names}"
+              assert "build/RibbonLib.Net10.targets" in names, f"the targets file is missing: {names}"
               assert "README.md" in names, f"no README.md in {names}"
+              # The runtime assembly must not name a design-tools type: that reference is what used
+              # to make the DLL unloadable outside the designer.
+              runtime = z.read(dlls[0])
+              assert b"Microsoft.DotNet.DesignTools" not in runtime, \
+                  "design-tools types leaked into the runtime assembly"
               nuspec = z.read("RibbonLib.Net10.nuspec").decode("utf-8-sig")
               assert "<version>" + version + "</version>" in nuspec, "nuspec version does not match"
               assert "Microsoft.WinForms.Designer.SDK" not in nuspec, "design-time SDK leaked into the dependencies"

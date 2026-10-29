@@ -13,7 +13,6 @@
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {

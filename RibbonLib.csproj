@@ -29,12 +29,46 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Compile-time only: the design server ships with Visual Studio, never with this package. -->
-    <PackageReference Include="Microsoft.WinForms.Designer.SDK" Version="1.6.0" PrivateAssets="all" />
+    <!-- The design-time half lives in its own assembly, so nothing here mentions design-tools types. -->
+    <Compile Remove="RibbonLib.Design\**" />
+    <None Remove="RibbonLib.Design\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The designers are compiled against this assembly, so it may reach their internals. -->
+    <InternalsVisibleTo Include="RibbonLib.Design" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="RibbonLib.targets" Pack="true" PackagePath="build\RibbonLib.Net10.targets" />
+    <None Include="RibbonLib.targets" Pack="true" PackagePath="buildTransitive\RibbonLib.Net10.targets" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- The design half is added to the package during packing, not by an item declared above:
+         items are evaluated before any target runs, so a declared path would be missing on a cold
+         build. It ships in tools/, next to the assembly and never in lib/, so it is not a
+         compile-time reference for the consuming app. -->
+    <TargetsForTfmSpecificContentInPackage>
+      $(TargetsForTfmSpecificContentInPackage);AddDesignAssemblyToPackage
+    </TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="AddDesignAssemblyToPackage">
+    <!-- A plain `dotnet pack` builds the designer first, so the package cannot ship a stale one.
+         Packing with NoBuild (the publish workflow) expects both projects to be built already. -->
+    <MSBuild Projects="RibbonLib.Design\RibbonLib.Design.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);Version=$(Version)"
+             Condition="'$(NoBuild)' != 'true'" />
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\net10.0-windows\RibbonLib.Design.dll">
+        <PackagePath>tools\net10.0-windows\</PackagePath>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
 
 </Project>

@@ -18,11 +18,10 @@ using System.Drawing.Design;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Text.RegularExpressions;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
-    [Designer("RibbonLib.RibbonButtonDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonButtonDesigner, RibbonLib.Design")]
     public class RibbonButton : RibbonItem, IContainsRibbonComponents
     {
         #region Fields
@@ -291,7 +290,7 @@ namespace RibbonLib
         /// Gets the collection of items shown on the dropdown pop-up when Style allows it
         /// </summary>
         [Category("Drop Down")]
-        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonItemCollection DropDownItems { get; }
 

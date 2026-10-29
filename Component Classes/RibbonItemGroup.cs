@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
@@ -24,7 +23,7 @@ namespace RibbonLib
     /// and disappear together when the panel size is reduced.
     /// </summary>
     //[Designer("System.Windows.Forms.RibbonQuickAccessToolbarDesigner")]
-    [Designer("RibbonLib.RibbonItemGroupDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonItemGroupDesigner, RibbonLib.Design")]
     public class RibbonItemGroup : RibbonItem,
         IContainsSelectableRibbonItems, IContainsRibbonComponents
     {
@@ -130,7 +129,7 @@ namespace RibbonLib
         /// <summary>
         /// Gets the collection of items of this group
         /// </summary>
-        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonItemGroupItemCollection Items { get; }
 

@@ -11,11 +11,10 @@
 
 using System.ComponentModel;
 using System.Drawing;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
-    [Designer("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib")]
+    [Designer("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib.Design")]
     public class RibbonOrbMenuItem
         : RibbonButton
     {

@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="../RibbonLib Test/RibbonLib Test.csproj" Id="0be94178-c57e-4809-8f6f-0f154b2ea2fb" />
+  <Project Path="RibbonLib.Design/RibbonLib.Design.csproj" />
   <Project Path="RibbonLib.csproj" />
 </Solution>

@@ -33,12 +33,17 @@ out-of-process design server:
   code — no custom serialization to unpick later.
 
 **It keeps design-time code out of your app.** A deployed app must never load
-`Microsoft.DotNet.DesignTools.Server`, which only exists inside Visual Studio. This fork makes sure
-nothing on a runtime path names a design-time type — the designer and editors are referenced by *name*
-in attributes, the ribbon reaches its designer through a plain object registration, and an assembly
-resolver lets the design server satisfy the reference whatever version it hosts. Without this, the
-first mouse move over the ribbon threw `FileNotFoundException: Could not load file or assembly
-'Microsoft.DotNet.DesignTools.Server, Version=1.6.0.0'` and took the app down.
+`Microsoft.DotNet.DesignTools.Server`, which only exists inside Visual Studio, so the designers,
+glyphs and collection editors live in a separate assembly, `RibbonLib.Design.dll`. `RibbonLib.dll`
+itself references **no** design-tools assembly: it names its designers by *string* in attributes and
+reaches them through a plain `object` handshake (`Classes/RibbonDesignTime.cs`). The design assembly
+is copied next to your application — that is where the design server looks for it — but it is not a
+compile-time reference and nothing loads it at runtime.
+
+That split also fixes an inspection problem: enumerating the shipping assembly used to throw
+`FileNotFoundException: Could not load file or assembly 'Microsoft.DotNet.DesignTools.Server,
+Version=1.6.0.0'` in any process without design tools (Visual Studio's toolbox discovery, for one),
+because the designers were public types inside it.
 
 ## Requirements
 
@@ -48,9 +53,9 @@ first mouse move over the ribbon threw `FileNotFoundException: Could not load fi
 | Design-time | Visual Studio with the WinForms designer (the out-of-process design server) |
 | Build | .NET 10 SDK |
 
-The library compiles against `Microsoft.WinForms.Designer.SDK` 1.6.0, which supplies the design-time
-types at compile time only. At design time the code runs against whichever design-tools build your
-Visual Studio hosts; nothing from that package is shipped to your application.
+`RibbonLib.Design` compiles against `Microsoft.WinForms.Designer.SDK` 1.6.0, which supplies the
+design-time types at compile time only. At design time the code runs against whichever design-tools
+build your Visual Studio hosts; nothing from that package is shipped to your application.
 
 ## Quick start
 
@@ -179,13 +184,27 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
 
 ## How the design-time support is put together
 
+Two assemblies, so the boundary is a compile-time fact rather than a convention:
+
+| Assembly | Contents |
+|---|---|
+| `RibbonLib.dll` | The control itself. No reference to `Microsoft.DotNet.DesignTools.*` |
+| `RibbonLib.Design.dll` | Everything that only runs inside the designer |
+
 | Piece | Role |
 |---|---|
-| `Classes/Designers/RibbonDesigner.cs` | The ribbon designer: selection, the Add pills, the Add Control menu, the Properties verbs |
-| `Classes/RibbonItemCollectionEditor.cs` and friends | Collection editors for the item collections |
-| `Classes/RibbonDesignTime.cs` | The runtime-safe bridge. Runtime code talks to the designer as a plain `object`, so no design-time type is ever named on a runtime path |
-| `Classes/RibbonDesignToolsResolver.cs` | Answers design-tools assembly requests with the copy the IDE has loaded, whatever its version |
-| `Classes/Glyphs/` | Design-surface decorations (orb, quick access toolbar, Add pills) |
+| `RibbonLib.Design/Designers/RibbonDesigner.cs` | The ribbon designer: selection, the Add pills, the Add Control menu, the Properties verbs |
+| `RibbonLib.Design/Editors/` | Collection editors for the item collections |
+| `RibbonLib.Design/Glyphs/` | Design-surface decorations (orb, quick access toolbar, Add pills) |
+| `Classes/RibbonDesignToolsResolver.cs` | Answers design-tools assembly requests with the copy the IDE has loaded, whatever its version. It sits in the runtime assembly so it is registered before the design assembly's types are resolved; it names no design-tools type itself |
+| `Classes/RibbonDesignTime.cs` | The runtime-safe bridge, in the runtime assembly. Runtime code talks to the designer as a plain `object`, so no design-time type is ever named on a runtime path |
+
+The pieces talk to each other through `InternalsVisibleTo("RibbonLib.Design")`, and every designer or
+editor is referenced from an attribute as `"…, RibbonLib.Design"`.
+
+A project that references the library gets `RibbonLib.Design.dll` in its output through a small
+targets file (`RibbonLib.targets`); the NuGet package ships the assembly under `tools/` and copies it
+the same way, so it never becomes a reference of the consuming code.
 
 ## Known limitations
 

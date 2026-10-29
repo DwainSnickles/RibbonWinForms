@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    The designers live in RibbonLib.Design.dll so the runtime assembly carries no design-tools
+    reference. The Visual Studio design server looks for designer assemblies next to the application,
+    so copy it there - without adding a compile-time reference the application never uses.
+  -->
+  <PropertyGroup>
+    <_RibbonDesignAssembly>$(MSBuildThisFileDirectory)..\tools\net10.0-windows\RibbonLib.Design.dll</_RibbonDesignAssembly>
+  </PropertyGroup>
+
+  <Target Name="CopyRibbonDesigner" AfterTargets="Build" Condition="Exists('$(_RibbonDesignAssembly)')">
+    <Copy SourceFiles="$(_RibbonDesignAssembly)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

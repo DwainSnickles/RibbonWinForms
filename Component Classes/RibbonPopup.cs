@@ -14,7 +14,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Security.Permissions;
-using RibbonLib.RibbonDesign;
 using RibbonLib.RibbonHelpers;
 
 namespace RibbonLib

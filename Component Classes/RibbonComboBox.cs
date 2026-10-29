@@ -16,7 +16,7 @@ using System.Drawing.Design;
 
 namespace RibbonLib
 {
-    [Designer("RibbonLib.RibbonComboBoxDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonComboBoxDesigner, RibbonLib.Design")]
     public class RibbonComboBox
         : RibbonTextBox, IContainsRibbonComponents, IDropDownRibbonItem
     {
@@ -111,7 +111,7 @@ namespace RibbonLib
         /// <summary>
         /// Gets the collection of items to be displayed on the dropdown
         /// </summary>
-        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [Category("Drop Down")]
         public RibbonItemCollection DropDownItems { get; }

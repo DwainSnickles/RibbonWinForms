@@ -14,12 +14,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
 	[DesignTimeVisible(false)]
-	[Designer("RibbonLib.RibbonPanelDesigner, RibbonLib")]
+	[Designer("RibbonLib.RibbonPanelDesigner, RibbonLib.Design")]
 	public class RibbonPanel :
 		Component, IRibbonElement, IContainsSelectableRibbonItems, IContainsRibbonComponents
 	{
@@ -327,7 +326,7 @@ namespace RibbonLib
 		/// <summary>
 		/// Gets the collection of RibbonItem elements of this panel
 		/// </summary>
-		[Editor("RibbonLib.RibbonPanelItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+		[Editor("RibbonLib.RibbonPanelItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
 		public RibbonItemCollection Items { get; }
 

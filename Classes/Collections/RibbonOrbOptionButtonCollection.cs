@@ -6,7 +6,7 @@ using System.Drawing.Design;
 
 namespace RibbonLib.Collections
 {
-    [Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+    [Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
     public class RibbonOrbOptionButtonCollection : RibbonItemCollection
     {
     }

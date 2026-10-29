@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
-using RibbonLib.RibbonDesign;
 
 namespace RibbonLib
 {
@@ -154,7 +153,7 @@ namespace RibbonLib
 
         [Description("The drop down items of the dropdown button of the toolbar")]
         [Category("Drop Down")]
-        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonItemCollection DropDownButtonItems => DropDownButton.DropDownItems;
 

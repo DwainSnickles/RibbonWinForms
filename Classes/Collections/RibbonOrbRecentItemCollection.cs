@@ -3,7 +3,7 @@ using System.Drawing.Design;
 
 namespace RibbonLib
 {
-    [Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+    [Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
     public class RibbonOrbRecentItemCollection : RibbonItemCollection
     {
     }

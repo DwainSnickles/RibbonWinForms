@@ -4,7 +4,7 @@ using System.Drawing.Design;
 
 namespace RibbonLib
 {
-    [Editor("RibbonLib.RibbonQuickAccessToolbarItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+    [Editor("RibbonLib.RibbonQuickAccessToolbarItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
     public class RibbonQuickAccessToolbarItemCollection : RibbonItemCollection
     {
         #region Fields

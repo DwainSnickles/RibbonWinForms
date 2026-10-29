@@ -7,7 +7,7 @@ using RibbonLib.Collections;
 
 namespace RibbonLib
 {
-    [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+    [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
     public class RibbonItemCollection : RibbonCollectionBase<RibbonItem>
     {
         internal RibbonItemCollection() : base(null) { }

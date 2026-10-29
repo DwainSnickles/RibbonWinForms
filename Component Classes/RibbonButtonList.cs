@@ -22,7 +22,7 @@ namespace RibbonLib
     /// <summary>
     /// Represents a list of buttons that can be navigated, an example being the Style Gallery in Word/Excel.
     /// </summary>
-    [Designer("RibbonLib.RibbonButtonListDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonButtonListDesigner, RibbonLib.Design")]
     public sealed class RibbonButtonList : RibbonItem,
         IContainsSelectableRibbonItems, IScrollableRibbonItem, IContainsRibbonComponents
     {
@@ -258,7 +258,7 @@ namespace RibbonLib
         /// <summary>
         /// Gets the collection of items shown on the dropdown pop-up when Style allows it
         /// </summary>
-        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonItemCollection DropDownItems { get; }
 
@@ -395,7 +395,7 @@ namespace RibbonLib
         /// <summary>
         /// Gets the collection of buttons of the list
         /// </summary>
-        [Editor("RibbonLib.RibbonButtonCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonButtonCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonButtonCollection Buttons { get; }
 

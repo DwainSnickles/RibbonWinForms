@@ -14,7 +14,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms.VisualStyles;
-using RibbonLib.RibbonDesign;
 using RibbonLib.RibbonHelpers;
 
 namespace RibbonLib

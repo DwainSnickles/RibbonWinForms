@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
-using RibbonLib.RibbonDesign;
 
 
 namespace RibbonLib
@@ -23,7 +22,7 @@ namespace RibbonLib
     /// Represents a tab that can contain RibbonPanel objects
     /// </summary>
     [DesignTimeVisible(false)]
-    [Designer("RibbonLib.RibbonTabDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonTabDesigner, RibbonLib.Design")]
     public class RibbonTab : Component, IRibbonElement, IRibbonToolTip, IContainsRibbonComponents
     {
         #region Fields
@@ -277,7 +276,7 @@ namespace RibbonLib
 
         /// <summary>
 		/// Gets the collection of panels that belong to this tab
-		[Editor("RibbonLib.RibbonPanelCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+		[Editor("RibbonLib.RibbonPanelCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public RibbonPanelCollection Panels { get; }
 

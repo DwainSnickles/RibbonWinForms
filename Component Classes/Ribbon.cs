@@ -16,7 +16,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Security.Permissions;
 using RibbonLib.Collections;
-using RibbonLib.RibbonDesign;
 using RibbonLib.RibbonHelpers;
 
 namespace RibbonLib
@@ -30,7 +29,7 @@ namespace RibbonLib
     // does not exist outside Visual Studio. Any runtime that read the attributes (TypeDescriptor,
     // the design server's own loader) then threw FileNotFoundException. A designer name is
     // resolved on demand, and only where a designer exists.
-    [Designer("RibbonLib.RibbonDesign.RibbonDesigner, RibbonLib")]
+    [Designer("RibbonLib.RibbonDesign.RibbonDesigner, RibbonLib.Design")]
     // Named so the toolbox lists it: a component appears when it implements IComponent and neither
     // ToolboxItem(false) nor DesignTimeVisible(false) applies. The tabs, panels and items that live
     // inside the ribbon opt out with DesignTimeVisible(false), so the ribbon is the only entry.
@@ -120,16 +119,16 @@ namespace RibbonLib
         /// <see cref="OrbOptionItems"/> and <see cref="OrbRecentItems"/> already did.
         /// </remarks>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [Editor("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+        [Editor("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
         public RibbonOrbMenuItemCollection OrbMenuItems => OrbDropDown.MenuItems;
 
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-		[Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+		[Editor("RibbonLib.RibbonOrbOptionButtonCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
 		public RibbonOrbOptionButtonCollection OrbOptionItems => OrbDropDown.OptionItems;
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-		[Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib", typeof(UITypeEditor))]
+		[Editor("RibbonLib.RibbonOrbRecentItemCollectionEditor, RibbonLib.Design", typeof(UITypeEditor))]
 		public RibbonOrbRecentItemCollection OrbRecentItems => OrbDropDown.RecentItems;
 
 

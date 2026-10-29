@@ -9,7 +9,6 @@
 // Original project from http://ribbon.codeplex.com/
 // Continue to support and maintain by http://officeribbon.codeplex.com/
 
-using RibbonLib.RibbonDesign;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
