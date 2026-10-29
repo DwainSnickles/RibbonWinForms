@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Designer session artefacts
+session-state/
+
+# Logs and packages
+*.log
+*.nupkg
+*.snupkg
+
+# Temporary / diff files
+*~
+*.tmp
+*.bak
