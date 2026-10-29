@@ -1,9 +1,11 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![Download v1.0.0](https://img.shields.io/badge/download-v1.0.0-blue)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)
+[![NuGet](https://img.shields.io/nuget/vpre/Dwain.RibbonLib.svg?label=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
 
-**[Download RibbonLib.dll (v1.0.0)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)** — no NuGet package yet, so this is the built DLL, or add the project to your solution.
+**`dotnet add package Dwain.RibbonLib --version 1.0.0-net10`** — published on
+[nuget.org](https://www.nuget.org/packages/Dwain.RibbonLib); the DLL alone cannot go in the toolbox,
+the package is what puts it there.
 
 An Office-style ribbon control for Windows Forms, ported to **.NET 10** and repaired so it works
 both at runtime and inside the **out-of-process WinForms designer** that current Visual Studio uses.
@@ -174,11 +176,12 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed
-dotnet nuget add source %USERPROFILE%\RibbonLibFeed --name RibbonLibLocal
-rem 1.0.0-net10 is a prerelease, so the version has to be given exactly
 dotnet add package Dwain.RibbonLib --version 1.0.0-net10
 ```
+
+The package is on nuget.org, so no local feed is needed. `1.0.0-net10` is a prerelease, which is why
+the version has to be given exactly; a local build can still be packed into your own feed with
+`dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
 Reopen the form afterwards; the **RibbonLib Components** tab appears with the reference. Inside this
 solution the project reference already does it — check that **Automatically populate the toolbox** is
