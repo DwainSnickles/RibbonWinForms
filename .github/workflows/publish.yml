@@ -1,0 +1,130 @@
+name: Publish NuGet package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Package version (defaults to the tag, or the csproj <Version> when run from a branch)
+        required: false
+      dry_run:
+        description: Build and pack, but do not push to nuget.org
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Pack and push
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve the package version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # v1.0.0 -> 1.0.0, v2.0.0-beta.1 -> 2.0.0-beta.1
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' RibbonLib.csproj | head -1)
+          fi
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$version' is not a valid NuGet version. Tag releases as v<major>.<minor>.<patch>."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Packing version $version"
+
+      - name: Build
+        run: dotnet build RibbonLib.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Pack
+        run: dotnet pack RibbonLib.csproj -c Release --no-build -o artifacts -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Check the package contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "${{ steps.version.outputs.version }}" <<'PY'
+          import sys, zipfile, glob
+          version = sys.argv[1]
+          nupkg = f"artifacts/RibbonLib.Net10.{version}.nupkg"
+          with zipfile.ZipFile(nupkg) as z:
+              names = z.namelist()
+              dlls = [n for n in names if n.startswith("lib/") and n.endswith("RibbonLib.dll")]
+              assert dlls, f"no lib/*/RibbonLib.dll in {names}"
+              assert "README.md" in names, f"no README.md in {names}"
+              nuspec = z.read("RibbonLib.Net10.nuspec").decode("utf-8-sig")
+              assert "<version>" + version + "</version>" in nuspec, "nuspec version does not match"
+              assert "Microsoft.WinForms.Designer.SDK" not in nuspec, "design-time SDK leaked into the dependencies"
+          print(f"{nupkg}: {', '.join(names)}")
+          PY
+          ls -l artifacts
+
+      - name: Upload the packages as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages-${{ steps.version.outputs.version }}
+          path: artifacts/*
+          if-no-files-found: error
+
+      - name: Fail early when the API key is missing
+        if: ${{ inputs.dry_run != true }}
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "${NUGET_API_KEY:-}" ]; then
+            echo "::error::The repository secret NUGET_API_KEY is not set. Add it under Settings -> Secrets and variables -> Actions, with scope 'Push new packages and package versions' for RibbonLib.Net10."
+            exit 1
+          fi
+
+      - name: Push to nuget.org
+        if: ${{ inputs.dry_run != true }}
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          # --skip-duplicate keeps a re-run of an already-published version green.
+          for file in artifacts/*.nupkg artifacts/*.snupkg; do
+            dotnet nuget push "$file" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          done
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo "### RibbonLib.Net10 ${{ steps.version.outputs.version }}"
+            echo
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Dry run: packed and verified, nothing pushed to nuget.org."
+            else
+              echo "Pushed to nuget.org. It appears in search a few minutes after the push."
+            fi
+            echo
+            echo "https://www.nuget.org/packages/RibbonLib.Net10/${{ steps.version.outputs.version }}"
+          } >> "$GITHUB_STEP_SUMMARY"

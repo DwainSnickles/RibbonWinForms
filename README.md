@@ -98,6 +98,24 @@ Open `RibbonLib.slnx` in Visual Studio to work on the designer itself. Design-ti
 exercised inside Visual Studio; the runtime behaviour can be tested from any app that references the
 project.
 
+## Releasing
+
+Push a `v*` tag and the **Publish NuGet package** workflow packs `RibbonLib.Net10` and pushes it to
+nuget.org, along with its symbol package:
+
+```
+git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
+```
+
+- `v1.2.3` publishes package version `1.2.3`; `v2.0.0-beta.1` publishes `2.0.0-beta.1`. A tag that is
+  not `v<major>.<minor>.<patch>[-prerelease]` fails the run instead of publishing a guessed version.
+- The key comes from the repository secret `NUGET_API_KEY` (scope *Push new packages and package
+  versions*, glob `RibbonLib.Net10`). If it is missing the job stops before building anything it would
+  have to throw away.
+- Run it by hand from **Actions → Publish NuGet package → Run workflow** with `dry_run: true` to pack
+  and verify a package without publishing it. The `.nupkg` and `.snupkg` are attached to the run either
+  way.
+
 ## How the design-time support is put together
 
 | Piece | Role |
