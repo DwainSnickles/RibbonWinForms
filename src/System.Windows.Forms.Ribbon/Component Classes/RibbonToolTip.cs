@@ -55,6 +55,7 @@ namespace System.Windows.Forms
         /// and the image will display in ToolTip otherwise only text will display.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets a value indicating whether the ToolTip is drawn by the operating system or by code that you provide. If true, the properties 'ToolTipIcon' and 'ToolTipTitle' will set to their default values and the image will display in ToolTip otherwise only text will display.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new bool OwnerDraw
         {
             get => base.OwnerDraw;
@@ -75,6 +76,7 @@ namespace System.Windows.Forms
         /// Cannot set if the property 'OwnerDraw' is true.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets a value that defines the type of icon to be displayed alongside the ToolTip text. Cannot set if the property 'OwnerDraw' is true.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new ToolTipIcon ToolTipIcon
         {
             get => base.ToolTipIcon;
@@ -86,6 +88,7 @@ namespace System.Windows.Forms
         /// Cannot set if the property 'OwnerDraw' is true.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets a title for the ToolTip window. Cannot set if the property 'OwnerDraw' is true.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new string ToolTipTitle
         {
             get => base.ToolTipTitle;
@@ -97,6 +100,7 @@ namespace System.Windows.Forms
         /// Cannot set if the property 'OwnerDraw' is true.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets an Image for the ToolTip window. Cannot set if the property 'OwnerDraw' is true.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ToolTipImage { get; set; } = null;
 
         ///// <summary>
@@ -123,6 +127,7 @@ namespace System.Windows.Forms
         /// Gets or sets the background color for the ToolTip.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets the background color for the ToolTip.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new Color BackColor
         {
             get => base.BackColor;
@@ -133,6 +138,7 @@ namespace System.Windows.Forms
         /// Gets or sets the foreground color for the ToolTip.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets the foreground color for the ToolTip.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new Color ForeColor
         {
             get => base.ForeColor;
@@ -144,6 +150,7 @@ namespace System.Windows.Forms
         /// true if the ToolTip automatically resizes based on its text; otherwise, false. The default is true.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets a value that indicates whether the ToolTip resizes based on its text. true if the ToolTip automatically resizes based on its text; otherwise, false. The default is true.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AutoSize
         {
             get => _AutoSize;
@@ -162,6 +169,7 @@ namespace System.Windows.Forms
         /// Valid only if the Property 'AutoSize' is false.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets the size of the ToolTip. Valid only if the Property 'AutoSize' is false.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Size Size
         {
             get => _Size;
@@ -179,6 +187,7 @@ namespace System.Windows.Forms
         /// Gets or sets the border color for the ToolTip.
         /// </summary>
         [Category("Custom Settings"), Description(@"Gets or sets the border color for the ToolTip.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color BorderColor
         {
             get => _BorderColor;

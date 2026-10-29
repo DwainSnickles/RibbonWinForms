@@ -69,6 +69,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets the bounds of the description
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Rectangle DescriptionBounds { get; set; }
 
         /// <summary>

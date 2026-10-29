@@ -350,6 +350,7 @@ namespace System.Windows.Forms
 		/// </summary>
 		[Localizable(true)]
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Text
         {
             get => _text;

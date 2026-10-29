@@ -142,11 +142,13 @@ namespace System.Windows.Forms
         /// <summary>
         /// Sets the maximum height in pixels for the dropdown window. Enter 0 for autosize. If the contents is larger than the window scrollbars will be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int DropDownMaxHeight { get; set; } = 0;
 
         /// <summary>
         /// Gets or sets the width of the scrollbar
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ScrollBarSize { get; set; }
 
         /// <summary>
@@ -290,11 +292,13 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets if the icons bar should be drawn
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool DrawIconsBar { get; set; }
 
         /// <summary>
         /// Gets or sets the selection service for the dropdown
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal ISelectionService SelectionService { get; set; }
 
         /// <summary>
@@ -305,6 +309,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets the size for measuring items (by default is DropDown)
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public RibbonElementSizeMode MeasuringSize { get; set; }
 
         /// <summary>
@@ -330,6 +335,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets a value indicating if the sizing grip should be visible
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowSizingGrip
         {
             get => _showSizingGrip;

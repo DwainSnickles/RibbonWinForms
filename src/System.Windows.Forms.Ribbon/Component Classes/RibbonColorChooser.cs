@@ -71,6 +71,7 @@ namespace System.Windows.Forms
         /// Gets or sets the currently chosen color
         /// </summary>
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color Color
         {
             get => _color;

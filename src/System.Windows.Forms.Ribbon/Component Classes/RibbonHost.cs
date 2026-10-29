@@ -32,6 +32,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets the control that this item will host
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Control HostedControl
         {
             get => ctl;

@@ -66,12 +66,14 @@ namespace System.Windows.Forms
         /// Gets or sets the roundness of the border
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int BorderRoundness { get; set; }
 
 
         /// <summary>
         /// Gets the related ToolStripDropDown
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal RibbonWrappedDropDown WrappedDropDown { get; set; }
 
         #endregion

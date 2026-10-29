@@ -512,6 +512,7 @@ namespace System.Windows.Forms
         }
 
         //[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new Size Size
         {
             get => base.Size;

@@ -139,6 +139,7 @@ namespace System.Windows.Forms
 
         [Category("Layout")]
         [Description("If activated, buttons will flow to bottom inside the list")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool FlowToBottom { get; set; }
 
 
@@ -262,6 +263,7 @@ namespace System.Windows.Forms
         /// Gets or sets the size that the buttons on the list should be
         /// </summary>
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public RibbonElementSizeMode ButtonsSizeMode
         {
             get => _buttonsSizeMode;
@@ -380,6 +382,7 @@ namespace System.Windows.Forms
         /// (wide) when SizeMode is Medium
         /// </summary>
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Size ItemsSizeInDropwDownMode
         {
             get => _ItemsInDropwDownMode;

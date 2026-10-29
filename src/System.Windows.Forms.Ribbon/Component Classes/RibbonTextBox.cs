@@ -122,6 +122,7 @@ namespace System.Windows.Forms
         /// </summary>
         [Category("Appearance")]
         [Description("Text on the textbox")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TextBoxText
         {
             get => _textBoxText;

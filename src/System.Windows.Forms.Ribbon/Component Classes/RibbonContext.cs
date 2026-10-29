@@ -50,6 +50,7 @@ namespace System.Windows.Forms
         /// Gets or sets the text of the Context
         /// </summary>
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Text
         {
             get => _text;
@@ -64,6 +65,7 @@ namespace System.Windows.Forms
         /// Gets or sets the color of the glow that indicates a context
         /// </summary>
         [Category("Appearance")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color GlowColor
         {
             get => _glowColor;
