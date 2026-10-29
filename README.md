@@ -4,7 +4,13 @@
 [![NuGet](https://img.shields.io/nuget/v/RibbonLib.Net10?color=green)](https://www.nuget.org/packages/RibbonLib.Net10)
 [![Download v1.0.0](https://img.shields.io/badge/download-v1.0.0-blue)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)
 
-**[Download RibbonLib.dll (v1.0.0)](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0)** — no NuGet package yet, so this is the built DLL, or add the project to your solution.
+**[Install from NuGet](https://www.nuget.org/packages/RibbonLib.Net10)**
+
+```
+dotnet add package RibbonLib.Net10
+```
+
+Prefer a file? `RibbonLib.dll` is attached to the [v1.0.0 release](https://github.com/DwainSnickles/RibbonWinForms/releases/tag/v1.0.0), or add `RibbonLib.csproj` to your solution.
 
 An Office-style ribbon control for Windows Forms, ported to **.NET 10** and repaired so it works
 both at runtime and inside the **out-of-process WinForms designer** that current Visual Studio uses.
@@ -135,7 +141,6 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
   designer types (1.6.0) and the design server inside Visual Studio carry different assembly versions;
   the resolver in this fork bridges that. If a future Visual Studio changes the designer API, the
   designer code may need updating — the runtime will be unaffected.
-- **No NuGet package.** Build the project or reference it directly.
 - Binding a runtime `PropertyGrid` to a `Ribbon` can throw `ArgumentNullException` while it walks the
   ribbon's collections (observed during this port). The designer's own property grid is not affected.
 
