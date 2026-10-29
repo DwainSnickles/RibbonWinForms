@@ -151,8 +151,25 @@ populate the toolbox** enabled (the default), a solution containing a project th
 `RibbonLib` — by project reference or by the NuGet package — shows a **RibbonLib Components** tab
 while that solution is open. The tab follows the reference: no reference, no tab.
 
-For an entry that does not depend on the open solution, register the assembly once with
-**Choose Toolbox Items → Browse** and point it at `RibbonLib.dll`.
+**Choose Toolbox Items → Browse → `RibbonLib.dll` does not work for .NET, and no change to this
+library can make it.** Visual Studio answers *"RibbonLib.dll targets a platform whose toolbox items
+cannot be enumerated dynamically"* because the toolbox only deploys controls that come from the open
+solution or from a NuGet package; adding a bare .NET assembly by path is not supported
+([dotnet/winforms#8077](https://github.com/dotnet/winforms/issues/8077), and the same is true of
+any .NET WinForms control library, not just this one).
+
+To have the ribbon in the toolbox of a project that is *not* in this solution, install it as a
+package — that is the supported route:
+
+```
+dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed
+dotnet nuget add source %USERPROFILE%\RibbonLibFeed --name RibbonLibLocal
+dotnet add package RibbonLib.Net10 --version 1.0.0
+```
+
+Reopen the form afterwards; the **RibbonLib Components** tab appears with the reference. Inside this
+solution the project reference already does it — check that **Automatically populate the toolbox** is
+on, and use the toolbox's **Reset**/**Refresh** if a stale list is in the way.
 
 ## Building
 
