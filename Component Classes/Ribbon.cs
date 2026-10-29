@@ -31,6 +31,10 @@ namespace RibbonLib
     // the design server's own loader) then threw FileNotFoundException. A designer name is
     // resolved on demand, and only where a designer exists.
     [Designer("RibbonLib.RibbonDesign.RibbonDesigner, RibbonLib")]
+    // Named so the toolbox lists it: a component appears when it implements IComponent and neither
+    // ToolboxItem(false) nor DesignTimeVisible(false) applies. The tabs, panels and items that live
+    // inside the ribbon opt out with DesignTimeVisible(false), so the ribbon is the only entry.
+    [ToolboxItem(true)]
 
 	public class Ribbon
 		 : Control, IMessageFilter, ISupportInitialize

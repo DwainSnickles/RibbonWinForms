@@ -134,6 +134,21 @@ busyPanel.ItemPadding = null;                        // back to the ribbon's val
 `PanelPadding` — the gap *between* panels inside a tab — stays ribbon-wide, because it belongs to
 the space between panels rather than to any one of them.
 
+## The toolbox
+
+`Ribbon` carries `[ToolboxItem(true)]`; the tabs, panels, items, contexts and popups that only make
+sense inside a ribbon are marked `DesignTimeVisible(false)`, so the toolbox offers the ribbon and
+nothing that would be wrong to drop on a form.
+
+A control appears in the toolbox, with no registration, when the project you are designing
+references its assembly. With **Tools → Options → Windows Forms Designer → General → Automatically
+populate the toolbox** enabled (the default), a solution containing a project that references
+`RibbonLib` — by project reference or by the NuGet package — shows a **RibbonLib Components** tab
+while that solution is open. The tab follows the reference: no reference, no tab.
+
+For an entry that does not depend on the open solution, register the assembly once with
+**Choose Toolbox Items → Browse** and point it at `RibbonLib.dll`.
+
 ## Building
 
 ```
