@@ -176,12 +176,15 @@ package — that is the supported route:
 ```
 dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed
 dotnet nuget add source %USERPROFILE%\RibbonLibFeed --name RibbonLibLocal
-dotnet add package RibbonLib.Net10 --version 1.0.0
+rem 1.0.0-net10 is a prerelease, so the version has to be given exactly
+dotnet add package Dwain.RibbonLib --version 1.0.0-net10
 ```
 
 Reopen the form afterwards; the **RibbonLib Components** tab appears with the reference. Inside this
 solution the project reference already does it — check that **Automatically populate the toolbox** is
-on, and use the toolbox's **Reset**/**Refresh** if a stale list is in the way.
+on, and use the toolbox's **Reset**/**Refresh** if a stale list is in the way. If the tab stays
+missing while the reference is definitely there, the toolbox list is cached: see
+[Troubleshooting](#troubleshooting).
 
 ## Building
 
@@ -195,7 +198,7 @@ project.
 
 ## Releasing
 
-Push a `v*` tag and the **Publish NuGet package** workflow packs `RibbonLib.Net10` and pushes it to
+Push a `v*` tag and the **Publish NuGet package** workflow packs `Dwain.RibbonLib` and pushes it to
 nuget.org, along with its symbol package:
 
 ```
@@ -204,9 +207,15 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
 
 - `v1.2.3` publishes package version `1.2.3`; `v2.0.0-beta.1` publishes `2.0.0-beta.1`. A tag that is
   not `v<major>.<minor>.<patch>[-prerelease]` fails the run instead of publishing a guessed version.
-- The key comes from the repository secret `NUGET_API_KEY` (scope *Push new packages and package
-  versions*, glob `RibbonLib.Net10`). If it is missing the job stops before building anything it would
-  have to throw away.
+- **No API key is stored anywhere.** Publishing uses
+  [Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing): the job
+  presents a GitHub OIDC token and nuget.org exchanges it for a temporary key that lives for an hour.
+  The policy that allows it is *RibbonLib publish* on nuget.org — owner `Dwains`, repository owner
+  `DwainSnickles`, repository `RibbonWinForms`, workflow `publish.yml`. A policy starts with 7 days of
+  temporary activation, so one successful publish is needed inside that window to make it permanent;
+  if it goes inactive, re-activate it from the policy's page. No `NUGET_API_KEY` secret is involved.
+- The package id and version both come from `RibbonLib.csproj` (`<PackageId>`, `<Version>`), so the
+  workflow packs `Dwain.RibbonLib` — the id is not repeated in the workflow or in this section.
 - Run it by hand from **Actions → Publish NuGet package → Run workflow** with `dry_run: true` to pack
   and verify a package without publishing it. The `.nupkg` and `.snupkg` are attached to the run either
   way.
@@ -237,6 +246,77 @@ the project resolves as references. Shipping the designer under `tools/` and cop
 target puts the file in `bin\` but leaves it invisible to the designer, which then hosts the ribbon as
 a bare component that never draws itself. The runtime assembly still carries no design-tools
 reference, and nothing loads `RibbonLib.Design.dll` at run time.
+
+## Troubleshooting
+
+Almost every problem with this library in the designer is stale state, not a missing feature. Three
+caches matter, and all belong to Visual Studio rather than to the ribbon:
+
+| Where | Why it hurts |
+|---|---|
+| `%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\ComponentModelCache` | Per-type metadata for components. A stale entry keeps a *previous* build's properties, attributes and designers alive — a new `Padding` property never appears, or an old one still does |
+| `toolbox.tbd`, `toolboxIndex*.tbd`, `ToolboxItemDiscoveryCache*.dat` | The discovered toolbox list. A stale entry is why the **RibbonLib Components** tab is missing in one project while a fresh one shows it |
+| `%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\WinFormsDesigner\<random>\UserAppData` | Shadow copies of your assemblies, loaded by the out-of-process design server. Replace `RibbonLib.dll` without clearing this and the server keeps hosting the old one |
+
+### Reset the caches
+
+`tools\nuke-vs-caches.cmd` does all three, for every Visual Studio instance on the machine:
+
+```
+tools\nuke-vs-caches.cmd
+```
+
+It asks once, then does everything; pass `/y` for a scripted run. It closes `devenv.exe`, because the
+caches are held open while Visual Studio runs — this is the one step you cannot do from another
+process, which is why rebuilding or reinstalling the package can appear to change nothing.
+
+Two side effects worth knowing: your custom toolbox tabs (`button`, `card`, `panel`, …) are removed
+with the toolbox state and have to be recreated, and the first start afterwards is slower. Source
+files, project files and NuGet credentials are untouched.
+
+Afterwards delete `bin` and `obj` in the project that consumes the ribbon, then reopen the form. That
+last part makes Visual Studio re-resolve the package assets instead of reusing an old copy.
+
+The script is a file in this repository and is not shipped in any package, so without a clone, the
+same thing by hand — with Visual Studio closed, and `<instance>` being the folder whose name looks
+like `18.0_2d888849`:
+
+```bat
+taskkill /f /im devenv.exe
+rmdir /s /q "%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\ComponentModelCache"
+rmdir /s /q "%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\WinFormsDesigner"
+del /q      "%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\toolbox*.tbd"
+del /q      "%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\ToolboxItemDiscoveryCache*.dat"
+```
+
+### Symptoms and what they mean
+
+- **A small grey component glyph named `ribbon1` instead of a drawn ribbon.** The design server
+  could not load or construct the designer and fell back to component mode. Either
+  `RibbonLib.Design.dll` is not next to `RibbonLib.dll` in your output, or it is there
+  but stale. Check `bin\<Configuration>\<tfm>\` for both files, then reset the caches. If you
+  reference the package, a plain `dotnet restore` fixes a half-installed one; if you use the package
+  from a local feed, bump its version rather than relying on the cache to notice a repack of the
+  same version.
+- **The ribbon draws, but there are no tabs, no orb and none of the Add Tab / Add Panel / Add
+  Control pills.** The designer loaded from an older build. Reset the caches.
+- **The pills are there but a click does nothing.** They are design-time objects on the ribbon's
+  surface; a build in which the designer and the runtime assembly disagree loses the hit-testing.
+  Make sure `RibbonLib.dll` and `RibbonLib.Design.dll` are the same version, then reset.
+- **The ribbon collection editor opens empty.** Same cause: the editor came from the design
+  assembly, the collections it enumerates came from the runtime assembly, and one of them is old.
+  Reset the caches and reopen the form.
+- **A property you just added is not in the Properties grid.** The properties are read through the
+  type metadata in `ComponentModelCache`, which was written when you first dropped the control.
+- **`Tools → Choose Toolbox Items → Browse → RibbonLib.dll` says the platform cannot be
+  enumerated.** Expected — see [The toolbox](#the-toolbox). Use a project or package reference.
+- **`ObjectDisposedException` on `RibbonLib.Ribbon` inside the design server, usually when the orb
+  dropdown closes.** Design-time only, and fixed for the paths the designer uses; if you can still
+  reproduce it, report the call stack — a runtime app does not take that path.
+
+Restarting Visual Studio does not clear any of this; the caches survive a restart by design. Neither
+does **Build → Clean**. If a fix seems not to have landed, run the script before looking for another
+cause.
 
 ## Known limitations
 

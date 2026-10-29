@@ -11,13 +11,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>RibbonLib.Net10</PackageId>
-    <Version>1.0.0</Version>
-    <Title>RibbonLib for .NET 10</Title>
+    <PackageId>Dwain.RibbonLib</PackageId>
+	<Version>1.0.0-net10</Version>
+    <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>DwainSnickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
-    <Description>Office-style ribbon control for Windows Forms on .NET 10, with working out-of-process Visual Studio designer support. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar, all editable in the designer. No design-time tooling is needed at runtime. A fork of RibbonWinForms (MS-PL).</Description>
-    <PackageTags>winforms;ribbon;office-ribbon;windows-forms;ribbon-control;dotnet;net10;winforms-designer;gui</PackageTags>
+    <Description>Office-style ribbon control for Windows Forms on .NET 8 or 10, with working out-of-process Visual Studio designer support. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar, all editable in the designer. No design-time tooling is needed at runtime. A fork of RibbonWinForms (MS-PL).</Description>
+    <PackageTags>winforms;ribbon;office-ribbon;windows-forms;ribbon-control;dotnet;net8;net10;winforms-designer;gui</PackageTags>
     <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>

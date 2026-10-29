@@ -25,6 +25,11 @@ jobs:
   publish:
     name: Pack and push
     runs-on: windows-latest
+    permissions:
+      contents: read
+      # Lets the job ask GitHub for an OIDC token. Trusted Publishing exchanges that token for a
+      # temporary nuget.org API key, so no long-lived credential is stored in this repository.
+      id-token: write
 
     steps:
       - name: Checkout
@@ -35,7 +40,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Resolve the package version
+      - name: Resolve the package identity
         id: version
         shell: bash
         run: |
@@ -55,11 +60,20 @@ jobs:
             exit 1
           fi
 
+          # The package id is read from the project rather than repeated here, so renaming the
+          # package cannot leave this workflow pointing at artifacts that are never produced.
+          pkgid=$(sed -n 's/.*<PackageId>\(.*\)<\/PackageId>.*/\1/p' RibbonLib.csproj | head -1)
+          if [ -z "$pkgid" ]; then
+            echo "::error::RibbonLib.csproj has no <PackageId>; the workflow will not guess one."
+            exit 1
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Packing version $version"
+          echo "pkgid=$pkgid" >> "$GITHUB_OUTPUT"
+          echo "Packing $pkgid $version"
 
       # Both halves are built here: the runtime library, then the design assembly that the package
-      # ships in tools/ and copies to the app output. `pack --no-build` then only packs.
+      # ships in lib/ next to it, one per target framework. `pack --no-build` then only packs.
       - name: Build
         shell: bash
         run: |
@@ -74,26 +88,42 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - "${{ steps.version.outputs.version }}" <<'PY'
-          import sys, zipfile, glob
-          version = sys.argv[1]
-          nupkg = f"artifacts/RibbonLib.Net10.{version}.nupkg"
+          python - "${{ steps.version.outputs.pkgid }}" "${{ steps.version.outputs.version }}" <<'PY'
+          import sys, zipfile
+          pkgid, version = sys.argv[1], sys.argv[2]
+          nupkg = f"artifacts/{pkgid}.{version}.nupkg"
+
           with zipfile.ZipFile(nupkg) as z:
               names = z.namelist()
-              dlls = [n for n in names if n.startswith("lib/") and n.endswith("RibbonLib.dll")]
-              assert dlls, f"no lib/*/RibbonLib.dll in {names}"
-              assert "tools/net10.0-windows/RibbonLib.Design.dll" in names, \
-                  f"the designer is not in the package: {names}"
-              assert "build/RibbonLib.Net10.targets" in names, f"the targets file is missing: {names}"
+
+              # One folder per target framework, each holding the runtime assembly and the design
+              # assembly the Visual Studio design server resolves. A missing designer is the
+              # difference between a drawn ribbon and a grey component glyph, so it fails here
+              # rather than in someone's designer.
+              libdirs = {n.split("/")[1] for n in names if n.startswith("lib/") and n.count("/") >= 2}
+              assert {"net8.0-windows7.0", "net10.0-windows7.0"} <= libdirs, \
+                  f"expected both target frameworks in lib/, found {sorted(libdirs)}"
+              for libdir in sorted(libdirs):
+                  for dll in ("RibbonLib.dll", "RibbonLib.Design.dll"):
+                      assert f"lib/{libdir}/{dll}" in names, \
+                          f"lib/{libdir}/{dll} is missing: {names}"
               assert "README.md" in names, f"no README.md in {names}"
+
               # The runtime assembly must not name a design-tools type: that reference is what used
               # to make the DLL unloadable outside the designer.
-              runtime = z.read(dlls[0])
+              runtime = z.read("lib/net10.0-windows7.0/RibbonLib.dll")
               assert b"Microsoft.DotNet.DesignTools" not in runtime, \
                   "design-tools types leaked into the runtime assembly"
-              nuspec = z.read("RibbonLib.Net10.nuspec").decode("utf-8-sig")
-              assert "<version>" + version + "</version>" in nuspec, "nuspec version does not match"
-              assert "Microsoft.WinForms.Designer.SDK" not in nuspec, "design-time SDK leaked into the dependencies"
+
+              # The design assembly is a file, not a dependency: an application must not be
+              # compiled against it, and the design server ships with Visual Studio.
+              nuspec = z.read(f"{pkgid}.nuspec").decode("utf-8-sig")
+              assert f"<id>{pkgid}</id>" in nuspec, "the nuspec id does not match the project"
+              assert f"<version>{version}</version>" in nuspec, "the nuspec version does not match"
+              assert "Microsoft.WinForms.Designer.SDK" not in nuspec, \
+                  "design-time SDK leaked into the dependencies"
+              assert "<dependency " not in nuspec, f"the package should have no dependencies: {nuspec}"
+
           print(f"{nupkg}: {', '.join(names)}")
           PY
           ls -l artifacts
@@ -105,24 +135,29 @@ jobs:
           path: artifacts/*
           if-no-files-found: error
 
-      - name: Fail early when the API key is missing
+      # Trusted Publishing: the policy registered on nuget.org names this repository owner, this
+      # repository, this workflow file and the nuget.org profile below. The token is minted from
+      # GitHub's OIDC endpoint and never touches a secret. It is requested immediately before the
+      # push because the key nuget.org returns is only valid for an hour.
+      - name: Log in to nuget.org (OIDC)
+        id: login
         if: ${{ inputs.dry_run != true }}
-        shell: bash
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if [ -z "${NUGET_API_KEY:-}" ]; then
-            echo "::error::The repository secret NUGET_API_KEY is not set. Add it under Settings -> Secrets and variables -> Actions, with scope 'Push new packages and package versions' for RibbonLib.Net10."
-            exit 1
-          fi
+        uses: NuGet/login@v1
+        with:
+          # The nuget.org *profile* name, not an email address and not the GitHub login.
+          user: Dwains
 
       - name: Push to nuget.org
         if: ${{ inputs.dry_run != true }}
         shell: bash
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           set -euo pipefail
+          if [ -z "${NUGET_API_KEY:-}" ]; then
+            echo "::error::nuget.org did not return a temporary key. Check the Trusted Publishing policy is active and names repository owner 'DwainSnickles', repository 'RibbonWinForms' and workflow 'publish.yml'."
+            exit 1
+          fi
           # --skip-duplicate keeps a re-run of an already-published version green.
           for file in artifacts/*.nupkg artifacts/*.snupkg; do
             dotnet nuget push "$file" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
@@ -132,13 +167,13 @@ jobs:
         shell: bash
         run: |
           {
-            echo "### RibbonLib.Net10 ${{ steps.version.outputs.version }}"
+            echo "### ${{ steps.version.outputs.pkgid }} ${{ steps.version.outputs.version }}"
             echo
             if [ "${{ inputs.dry_run }}" = "true" ]; then
               echo "Dry run: packed and verified, nothing pushed to nuget.org."
             else
-              echo "Pushed to nuget.org. It appears in search a few minutes after the push."
+              echo "Pushed to nuget.org with a temporary key from Trusted Publishing. It appears in search a few minutes after the push."
             fi
             echo
-            echo "https://www.nuget.org/packages/RibbonLib.Net10/${{ steps.version.outputs.version }}"
+            echo "https://www.nuget.org/packages/${{ steps.version.outputs.pkgid }}/${{ steps.version.outputs.version }}"
           } >> "$GITHUB_STEP_SUMMARY"
