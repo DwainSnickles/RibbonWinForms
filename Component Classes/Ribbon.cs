@@ -1653,11 +1653,11 @@ namespace RibbonLib
 		}
 
 		/// <summary>
-		/// Overriden. A ribbon dropped on a form is 80 pixels tall, so the tab strip and the
-		/// content area below it are visible before anything is added to it.
+		/// Overriden. A ribbon dropped on a form is 135 pixels tall: the caption bar, the tab strip
+		/// and a panel with a row of items fit without being clipped before anything is added.
 		/// </summary>
 		[Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		protected override Size DefaultSize => new Size(600, 80);
+		protected override Size DefaultSize => new Size(600, 135);
 
 		/// <summary>
 		/// Overriden. The default dock of the ribbon is top
