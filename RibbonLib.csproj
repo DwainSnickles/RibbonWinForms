@@ -38,6 +38,11 @@
     <!-- The design-time half lives in its own assembly, so nothing here mentions design-tools types. -->
     <Compile Remove="RibbonLib.Design\**" />
     <None Remove="RibbonLib.Design\**" />
+    <!-- Sample projects under samples/ have their own project files; without this their sources
+         would be globbed into the library as well and fail to compile here. -->
+    <Compile Remove="samples\**" />
+    <None Remove="samples\**" />
+    <EmbeddedResource Remove="samples\**" />
   </ItemGroup>
 
   <ItemGroup>
