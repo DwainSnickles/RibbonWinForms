@@ -183,6 +183,29 @@ The package is on nuget.org, so no local feed is needed. `1.0.2-net10` is a prer
 the version has to be given exactly; a local build can still be packed into your own feed with
 `dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
+**Doing it for a whole folder at once.** `tools\Add-RibbonToolbox.ps1` adds the package to every
+Windows Forms project it finds and leaves everything else alone — console apps, class libraries,
+WPF projects, and projects that already have it:
+
+```
+.\tools\Add-RibbonToolbox.ps1                  # every project in this repository
+.\tools\Add-RibbonToolbox.ps1 -Path D:\Suite   # any other folder, or one project file
+.\tools\Add-RibbonToolbox.ps1 -WhatIf          # list what it would change
+```
+
+It is the same `dotnet add package` call per project, so the toolbox ends up with the same reference
+it would have had; it just saves doing it by hand sixteen times. Pass `-NoRestore` to skip the
+download and let the next build restore.
+
+**A script cannot register the control in the toolbox without that reference.** The automation
+third-party control vendors run from their "install to toolbox" buttons is Visual Studio's own
+`DTE` toolbox API, and driving it from PowerShell does add a tab and an item — for a .NET project
+Visual Studio then reports *"the controls were successfully added to the toolbox but are not enabled
+in the active designer"*, and the entry stays greyed out. The .NET designer only deploys controls
+from the open solution or from a package, which is the same rule that refuses a DLL added through
+**Choose Toolbox Items**. (For a .NET Framework target the `DTE` route does work; this package does
+not target .NET Framework.)
+
 Reopen the form afterwards; the **RibbonLib Components** tab appears with the reference. Inside this
 solution the project reference already does it — check that **Automatically populate the toolbox** is
 on, and use the toolbox's **Reset**/**Refresh** if a stale list is in the way. If the tab stays
@@ -198,6 +221,25 @@ dotnet build RibbonLib.slnx
 Open `RibbonLib.slnx` in Visual Studio to work on the designer itself. Design-time behaviour can only be
 exercised inside Visual Studio; the runtime behaviour can be tested from any app that references the
 project.
+
+### Starting a new sample
+
+Do not build one by hand. This creates the project with the SDK, wires the ribbon and its design
+assembly, adds a form that already hosts a ribbon (tab, panel, button) and registers it in
+`RibbonLib.slnx`:
+
+```
+powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGallery
+```
+
+- `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
+- `-PackageVersion 1.0.2-net10` references the published package instead of the project, so the
+  sample sees the library exactly as a consumer does.
+- `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
+  there rather than in the designer.
+
+The new project goes in `samples/<Name>/`, which `RibbonLib.csproj` excludes from its own compile —
+without that exclusion the sample's sources are globbed into the library and the build fails.
 
 ## Releasing
 
