@@ -108,9 +108,16 @@ jobs:
               assert {"net8.0-windows7.0", "net10.0-windows7.0"} <= libdirs, \
                   f"expected both target frameworks in lib/, found {sorted(libdirs)}"
               for libdir in sorted(libdirs):
-                  for dll in ("RibbonLib.dll", "RibbonLib.Design.dll"):
-                      assert f"lib/{libdir}/{dll}" in names, \
-                          f"lib/{libdir}/{dll} is missing: {names}"
+                  # The runtime assembly is an ordinary reference. The designer is not: Visual
+                  # Studio loads a server-side designer only from Design/WinForms/Server, and
+                  # shipping it beside the runtime assembly made every application compile
+                  # against it.
+                  assert f"lib/{libdir}/RibbonLib.dll" in names, \
+                      f"lib/{libdir}/RibbonLib.dll is missing: {names}"
+                  design = f"lib/{libdir}/Design/WinForms/Server/RibbonLib.Design.dll"
+                  assert design in names, f"{design} is missing: {names}"
+                  assert f"lib/{libdir}/RibbonLib.Design.dll" not in names, \
+                      f"the designer must not ship as a runtime reference in {libdir}"
               assert "README.md" in names, f"no README.md in {names}"
 
               # The runtime assembly must not name a design-tools type: that reference is what used
