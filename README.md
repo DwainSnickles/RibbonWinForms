@@ -138,7 +138,7 @@ ribbon.SelectedIndexChanged += (s, e) =>
 };
 ```
 
-Both members ship from `1.0.3-net10`; `ActiveTab` and `ActiveTabChanged` are unchanged.
+Both members ship from `1.0.3-net10` and later; `ActiveTab` and `ActiveTabChanged` are unchanged.
 
 ## Spacing and padding
 

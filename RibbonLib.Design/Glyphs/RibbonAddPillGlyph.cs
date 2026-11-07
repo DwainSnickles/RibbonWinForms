@@ -79,14 +79,23 @@ namespace RibbonLib
 
         /// <summary>
         /// Decides whether the design surface routes the mouse to this glyph: over a pill (which
-        /// gets the hand cursor and highlights) or over a tab, panel, item or context, which the
-        /// click selects. Anywhere else the click falls through and selects the ribbon itself.
+        /// gets the hand cursor and highlights), over a tab (which switches the page), or over a
+        /// panel, item or context, which the click selects. Anywhere else the click falls through
+        /// and selects the ribbon itself.
         /// </summary>
         public override Cursor GetHitTest(Point p)
         {
             if (!TryToRibbonPoint(p, out int x, out int y))
             {
                 return null;
+            }
+
+            // A tab always answers with a cursor: the surface only delivers a click to a glyph
+            // whose hit test answers with one, and a tab has to receive that click for the page
+            // shown in the designer to change.
+            if (_designer.GetTabAt(x, y) != null)
+            {
+                return Cursors.Hand;
             }
 
             if (_designer.UpdatePillHover(x, y))

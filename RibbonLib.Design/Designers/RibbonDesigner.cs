@@ -867,6 +867,65 @@ namespace RibbonLib.RibbonDesign
         /// panel or button exists on the surface but can never be selected to edit its
         /// properties.
         /// </remarks>
+        /// <summary>
+        /// Gets the tab under a point on the ribbon, using the bounds the design surface draws.
+        /// </summary>
+        /// <returns>The tab, or <c>null</c> when the point is not on the tab strip.</returns>
+        public RibbonTab GetTabAt(int x, int y)
+        {
+            if (Ribbon == null || Ribbon.IsDisposed)
+            {
+                return null;
+            }
+
+            foreach (RibbonTab tab in Ribbon.Tabs)
+            {
+                if (tab.Bounds.Contains(x, y))
+                {
+                    return tab;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Makes the tab under a point the active one, so the form that hosts the ribbon switches
+        /// to that tab's page in the designer.
+        /// </summary>
+        /// <returns><c>true</c> when a tab was hit.</returns>
+        /// <remarks>
+        /// The tab is made active before it is selected, because making it active raises
+        /// <see cref="Ribbon.ActiveTabChanged"/> - the event the hosting form listens to - and that
+        /// has to happen even if the design server then declines to select the component.
+        /// </remarks>
+        public bool SelectTabAt(int x, int y)
+        {
+            RibbonTab tab = GetTabAt(x, y);
+
+            if (tab == null)
+            {
+                return false;
+            }
+
+            if (!ReferenceEquals(Ribbon.ActiveTab, tab))
+            {
+                Ribbon.ActiveTab = tab;
+            }
+
+            try
+            {
+                SelectedElement = tab;
+            }
+            catch (ArgumentException)
+            {
+                // Ribbon tabs created straight in InitializeComponent are not sited components,
+                // and the design server will not put those in the selection.
+            }
+
+            return true;
+        }
+
         public void SelectAt(int x, int y)
         {
             if (Ribbon == null || Ribbon.IsDisposed)
@@ -874,7 +933,23 @@ namespace RibbonLib.RibbonDesign
                 return;
             }
 
-            if (Ribbon.Tabs.Count == 0 || Ribbon.ActiveTab == null)
+            if (Ribbon.Tabs.Count == 0)
+            {
+                SelectRibbon();
+                return;
+            }
+
+            // The tab strip comes first, matched against the bounds the design surface draws and
+            // hit-tests with. The ribbon's own TabHitTest relies on its internal TabBounds
+            // bookkeeping, which the design server can leave stale, so a click on a tab fell
+            // through to the panel and item checks and the tab never became active - the page in
+            // the designer never switched.
+            if (SelectTabAt(x, y))
+            {
+                return;
+            }
+
+            if (Ribbon.ActiveTab == null)
             {
                 SelectRibbon();
                 return;
@@ -882,11 +957,7 @@ namespace RibbonLib.RibbonDesign
 
             if (Ribbon != null)
             {
-                if (Ribbon.TabHitTest(x, y))
-                {
-                    SelectedElement = Ribbon.ActiveTab;
-                }
-                else if (Ribbon.ContextHitTest(x, y))
+                if (Ribbon.ContextHitTest(x, y))
                 {
                     foreach (RibbonContext context in Ribbon.Contexts)
                     {

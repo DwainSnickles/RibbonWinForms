@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.3-net10</Version>
+	<Version>1.0.5-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Adds SelectedIndex and SelectedIndexChanged to the Ribbon. SelectedIndex is the index of the visible tab, so the tab can be chosen in the Properties window under Behavior and is written to Form1.Designer.cs as ribbon1.SelectedIndex = 1;, which reopens the designer on that tab. SelectedIndexChanged fires whenever the tab changes, including after a click, alongside the existing ActiveTabChanged. ActiveTab itself is unchanged, and nothing else differs from 1.0.2-net10.</PackageReleaseNotes>
+    <PackageReleaseNotes>Clicking a ribbon tab in the designer now switches the tab and shows that tab's page. Tabs are matched against the bounds the design surface draws instead of the ribbon's internal tab bookkeeping, which the design server can leave stale, and the tab strip answers the design server's hit test with a cursor so the click reaches the ribbon designer at all. The runtime API is unchanged from 1.0.4-net10.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -73,11 +73,12 @@
              Properties="Configuration=$(Configuration);Version=$(Version);TargetFramework=$(TargetFramework)"
              Condition="'$(NoBuild)' != 'true'" />
     <ItemGroup>
-      <!-- In lib/, next to the runtime assembly: the Visual Studio design server is only told about
-           assemblies the project resolves as references, so a designer parked in tools/ is copied to
-           bin and then ignored - the ribbon is hosted as a bare component and draws nothing. -->
+      <!-- In lib/[tfm]/Design/WinForms/Server, the folder Windows Forms loads server-side designers
+           from. Parked in lib/[tfm] the design assembly is a compile and runtime reference of every
+           consuming app, and the design server - which reads the Design folder - never loads it, so
+           the ribbon is hosted as a bare component: no designer, no design-time clicks. -->
       <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\$(TargetFramework)\RibbonLib.Design.dll">
-        <PackagePath>lib\$(TargetFramework)$(TargetPlatformVersion)\</PackagePath>
+        <PackagePath>lib\$(TargetFramework)$(TargetPlatformVersion)\Design\WinForms\Server\</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
