@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Adds SelectedIndex and SelectedIndexChanged to the Ribbon, so the visible tab can be chosen from the Properties window and is saved with the form, the same way TabControl works. Everything else is unchanged from 1.0.2-net10.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds SelectedIndex and SelectedIndexChanged to the Ribbon. SelectedIndex is the index of the visible tab, so the tab can be chosen in the Properties window under Behavior and is written to Form1.Designer.cs as ribbon1.SelectedIndex = 1;, which reopens the designer on that tab. SelectedIndexChanged fires whenever the tab changes, including after a click, alongside the existing ActiveTabChanged. ActiveTab itself is unchanged, and nothing else differs from 1.0.2-net10.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

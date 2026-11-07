@@ -107,6 +107,39 @@ Use `RibbonForm` instead of `Form` if you want the ribbon merged into a glass ca
 5. For collections (`Tabs`, `Panels`, `Items`, orb collections, `Buttons`, quick access items), use the
    collection editor from the Properties window — add, remove and reorder there.
 
+## Choosing the visible tab
+
+`ActiveTab` is an object reference, so it is hidden from the Properties window and a form cannot pick
+a tab at design time and keep the choice. `SelectedIndex` fills that gap and mirrors `TabControl`: it
+is the index of the visible tab, `-1` when the ribbon has no tabs, and setting it clamps to the tabs
+that exist.
+
+```csharp
+ribbon.SelectedIndex = 2;           // show the third tab
+var current = ribbon.SelectedIndex;  // -1 when there are no tabs
+```
+
+At design time, select the ribbon, open the **Behavior** category and set `SelectedIndex`. It is
+ordinary designer code — `ribbon1.SelectedIndex = 1;` in `Form1.Designer.cs` — so the form reopens in
+the designer on that tab, the same way a `TabControl` remembers its page.
+
+`SelectedIndexChanged` fires whenever the visible tab changes: from code, from a mouse click and from
+a change made in the designer. `ActiveTabChanged` still fires as well, so either event can drive a
+page swap:
+
+```csharp
+ribbon.SelectedIndexChanged += (s, e) =>
+{
+    switch (ribbon.SelectedIndex)
+    {
+        case 0: ShowPage(productPage); break;
+        case 1: ShowPage(filesPage); break;
+    }
+};
+```
+
+Both members ship from `1.0.3-net10`; `ActiveTab` and `ActiveTabChanged` are unchanged.
+
 ## Spacing and padding
 
 The ribbon's spacing is editable. Select the ribbon and every value appears under the **Padding**
