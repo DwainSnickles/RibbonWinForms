@@ -1360,6 +1360,35 @@ namespace RibbonLib
 		}
 
         /// <summary>
+        /// Gets or sets the index of the visible tab, so a tab can be chosen at design time the
+        /// same way a <see cref="TabControl"/> is: the value is saved with the form.
+        /// </summary>
+        [Browsable(true)]
+        [DefaultValue(0)]
+        [Category("Behavior")]
+        [Description("Index of the visible tab. Saved with the form, so the designer reopens on the same tab.")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        public int SelectedIndex
+        {
+            get => _activeTab == null ? -1 : Tabs.IndexOf(_activeTab);
+
+            set
+            {
+                if (Tabs.Count == 0)
+                    return;
+
+                ActiveTab = Tabs[Math.Max(0, Math.Min(value, Tabs.Count - 1))];
+            }
+        }
+
+        /// <summary>
+        /// Raised when <see cref="SelectedIndex"/> changes, by code, by the designer or by a click.
+        /// </summary>
+        [Category("Behavior")]
+        [Description("Raised when the visible tab changes.")]
+        public event EventHandler SelectedIndexChanged;
+
+        /// <summary>
         /// Gets or sets the tab that is currently active
         /// </summary>
         [Browsable(false)]
@@ -1383,6 +1412,7 @@ namespace RibbonLib
                     tab.SetActive(tab == value);
                 }
 
+                var previousIndex = _activeTab == null ? -1 : Tabs.IndexOf(_activeTab);
                 _activeTab = value;
 
                 RemoveHelperControls();
@@ -1395,6 +1425,12 @@ namespace RibbonLib
                 RenewSensor();
 
                 OnActiveTabChanged(EventArgs.Empty);
+
+                var currentIndex = _activeTab == null ? -1 : Tabs.IndexOf(_activeTab);
+                if (previousIndex != currentIndex)
+                {
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                }
             }
         }
 
@@ -2689,6 +2725,14 @@ namespace RibbonLib
 			{
 				ActiveTabChanged(this, e);
 			}
+		}
+
+		/// <summary>
+		/// Raises the <see cref="SelectedIndexChanged"/> event
+		/// </summary>
+		protected virtual void OnSelectedIndexChanged(EventArgs e)
+		{
+		    SelectedIndexChanged?.Invoke(this, e);
 		}
 
 		/// <summary>

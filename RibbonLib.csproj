@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.2-net10</Version>
+	<Version>1.0.3-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Adds discoverability tags — ribbon-framework, ribbon-tools, windows-ribbon, win-ribbon — alongside the existing winforms, ribbon, office-ribbon and windows-forms tags. Same library as 1.0.1-net10: a working out-of-process designer, selectable tabs/panels/items, Add Tab / Add Panel / Add Control pills, collection editors in the Properties grid, and no design-time assembly loaded at runtime.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds SelectedIndex and SelectedIndexChanged to the Ribbon, so the visible tab can be chosen from the Properties window and is saved with the form, the same way TabControl works. Everything else is unchanged from 1.0.2-net10.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
