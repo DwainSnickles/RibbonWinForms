@@ -10,8 +10,10 @@ the package is what puts it there.
 An Office-style ribbon control for Windows Forms, ported to **.NET 10** and repaired so it works
 both at runtime and inside the **out-of-process WinForms designer** that current Visual Studio uses.
 
-This is a fork of [RibbonWinForms](https://github.com/RibbonWinForms/RibbonWinForms) (MS-PL, originally
-by Jose Menendez Poo). Upstream targets .NET Framework 4.8; this fork moves the library to
+This is a fork of [WindowsRibbon](https://github.com/harborsiem/WindowsRibbon) and
+[RibbonWinForms](https://github.com/RibbonWinForms/RibbonWinForms) (MS-PL, originally
+by Jose Menendez Poo) - great work by harborsiem and the RibbonWinForms contributors.
+Upstream targets .NET Framework 4.8; this fork moves the library to
 `net10.0-windows` (and also builds `net8.0-windows` for hosts that have not moved yet) and fixes the
 things that port broke.
 
