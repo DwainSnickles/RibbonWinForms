@@ -14,7 +14,6 @@ using System.Drawing;
 
 namespace RibbonLib
 {
-    [Designer("RibbonLib.RibbonOrbMenuItemCollectionEditor, RibbonLib.Design")]
     public class RibbonOrbMenuItem
         : RibbonButton
     {
