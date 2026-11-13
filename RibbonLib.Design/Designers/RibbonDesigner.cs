@@ -2019,6 +2019,9 @@ namespace RibbonLib.RibbonDesign
         private const int OrbMenuHeaderHeight = 18;
         private const int OrbMenuSeparatorHeight = 9;
         private const int OrbMenuIconWidth = 22;
+        private const int OrbMenuButtonRowHeight = 22;
+        private const int OrbMenuAddButtonWidth = 44;
+        private const int OrbMenuSeparatorButtonWidth = 28;
 
         /// <summary>
         /// Gets whether the orb menu is drawn open on the design surface.
@@ -2192,38 +2195,50 @@ namespace RibbonLib.RibbonDesign
 
             List<OrbMenuEntry> entries = GetOrbMenuEntries();
 
-            if (entries.Count == 0)
-            {
-                return Rectangle.Empty;
-            }
-
-            Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
-            int width = 0;
+            int width;
             int height = OrbMenuPad * 2;
 
-            foreach (OrbMenuEntry entry in entries)
+            if (entries.Count == 0)
             {
-                height += OrbMenuEntryHeight(entry);
-
-                if (entry.Kind == OrbMenuEntryKind.Separator)
+                // With no items the real drop-down still shows its frame and the
+                // design-time "+" add glyphs, so the design surface does the same.
+                if (!_orbMenuOpen)
                 {
-                    continue;
+                    return Rectangle.Empty;
                 }
 
-                string text = GetOrbMenuEntryText(entry, Ribbon) ?? string.Empty;
-                int textWidth = TextRenderer.MeasureText(text, font).Width;
-
-                if (entry.Kind == OrbMenuEntryKind.Item ||
-                    entry.Kind == OrbMenuEntryKind.RecentItem ||
-                    entry.Kind == OrbMenuEntryKind.OptionItem)
-                {
-                    textWidth += OrbMenuIconWidth;
-                }
-
-                width = Math.Max(width, textWidth + OrbMenuPad * 2 + 8);
+                width = 200;
+                height += OrbMenuButtonRowHeight;
             }
+            else
+            {
+                Font measureFont = Ribbon.Font ?? SystemFonts.DefaultFont;
+                width = 0;
 
-            width = Math.Max(150, Math.Min(width, 240));
+                foreach (OrbMenuEntry entry in entries)
+                {
+                    height += OrbMenuEntryHeight(entry);
+
+                    if (entry.Kind == OrbMenuEntryKind.Separator)
+                    {
+                        continue;
+                    }
+
+                    string text = GetOrbMenuEntryText(entry, Ribbon) ?? string.Empty;
+                    int textWidth = TextRenderer.MeasureText(text, measureFont).Width;
+
+                    if (entry.Kind == OrbMenuEntryKind.Item ||
+                        entry.Kind == OrbMenuEntryKind.RecentItem ||
+                        entry.Kind == OrbMenuEntryKind.OptionItem)
+                    {
+                        textWidth += OrbMenuIconWidth;
+                    }
+
+                    width = Math.Max(width, textWidth + OrbMenuPad * 2 + 8);
+                }
+
+                width = Math.Max(150, Math.Min(width, 240));
+            }
 
             int x = Ribbon.OrbBounds.Left;
             int y = Ribbon.OrbBounds.Bottom + 2;
@@ -2271,6 +2286,44 @@ namespace RibbonLib.RibbonDesign
             }
 
             return new Rectangle(menu.Left + OrbMenuPad, y, menu.Width - OrbMenuPad * 2, height);
+        }
+
+        /// <summary>
+        /// Gets the bounds of one of the four design-time add buttons shown on the blank
+        /// orb menu, in ribbon coordinates. Index 0 is the menu-item "+", 1 the separator
+        /// "---", 2 the recent-items "+" and 3 the option-items "+" - the same buttons the
+        /// real drop-down paints in design mode.
+        /// </summary>
+        private static Rectangle GetOrbMenuGlyphButtonBounds(Rectangle menu, int index)
+        {
+            int y = menu.Top + OrbMenuPad;
+            int buttonWidth = index == 1
+                ? OrbMenuSeparatorButtonWidth
+                : OrbMenuAddButtonWidth;
+
+            const int gap = 6;
+            int leftGroupX = menu.Left + OrbMenuPad + 8;
+            int rightGroupWidth = OrbMenuAddButtonWidth * 2 + gap;
+            int rightGroupX = menu.Right - OrbMenuPad - 8 - rightGroupWidth;
+
+            int x;
+            switch (index)
+            {
+                case 0:
+                    x = leftGroupX;
+                    break;
+                case 1:
+                    x = leftGroupX + OrbMenuAddButtonWidth + gap;
+                    break;
+                case 2:
+                    x = rightGroupX;
+                    break;
+                default:
+                    x = rightGroupX + OrbMenuAddButtonWidth + gap;
+                    break;
+            }
+
+            return new Rectangle(x, y, buttonWidth, OrbMenuButtonRowHeight);
         }
 
         /// <summary>
@@ -2336,6 +2389,41 @@ namespace RibbonLib.RibbonDesign
                 return false;
             }
 
+            List<OrbMenuEntry> entries = GetOrbMenuEntries();
+
+            // The blank menu's add buttons create the matching kind of orb entry,
+            // like the glyphs on the real drop-down do in design mode.
+            if (entries.Count == 0)
+            {
+                Rectangle menu = GetOrbMenuBounds();
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (!GetOrbMenuGlyphButtonBounds(menu, i).Contains(x, y))
+                    {
+                        continue;
+                    }
+
+                    switch (i)
+                    {
+                        case 0:
+                            CreateOrbMenuItem(typeof(RibbonOrbMenuItem));
+                            break;
+                        case 1:
+                            CreateOrbMenuItem(typeof(RibbonSeparator));
+                            break;
+                        case 2:
+                            CreateOrbRecentItem(typeof(RibbonOrbRecentItem));
+                            break;
+                        default:
+                            CreateOrbOptionItem(typeof(RibbonOrbOptionButton));
+                            break;
+                    }
+                }
+
+                return true;
+            }
+
             int index = GetOrbMenuEntryIndex(x, y);
 
             if (index < 0)
@@ -2343,7 +2431,6 @@ namespace RibbonLib.RibbonDesign
                 return true;
             }
 
-            List<OrbMenuEntry> entries = GetOrbMenuEntries();
             OrbMenuEntry entry = entries[index];
             RibbonOrbDropDown dropDown = Ribbon.OrbDropDown;
 
@@ -2462,84 +2549,107 @@ namespace RibbonLib.RibbonDesign
                 Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
                 List<OrbMenuEntry> entries = GetOrbMenuEntries();
 
-                using (StringFormat format = new StringFormat
+                // The blank menu shows the same design-time add buttons the real
+                // drop-down paints, so entries can be created straight from it.
+                if (entries.Count == 0)
                 {
-                    LineAlignment = StringAlignment.Center,
-                    Trimming = StringTrimming.EllipsisCharacter,
-                    FormatFlags = StringFormatFlags.NoWrap
-                })
-                {
-                    for (int i = 0; i < entries.Count; i++)
+                    using (StringFormat buttonFormat = StringFormatFactory.Center(StringTrimming.None))
+                    using (SolidBrush buttonBrush = new SolidBrush(Color.FromArgb(50, Color.Blue)))
                     {
-                        Rectangle row = GetOrbMenuEntryBounds(i);
-                        OrbMenuEntry entry = entries[i];
-
-                        if (row.IsEmpty || entry.Kind == OrbMenuEntryKind.Separator)
+                        for (int i = 0; i < 4; i++)
                         {
-                            continue;
+                            Rectangle button = GetOrbMenuGlyphButtonBounds(bounds, i);
+                            graphics.FillRectangle(buttonBrush, button);
+                            graphics.DrawString(
+                                i == 1 ? "---" : "+",
+                                font,
+                                Brushes.White,
+                                button,
+                                buttonFormat);
                         }
-
-                        bool hovered = i == _orbMenuHover;
-
-                        if (hovered)
+                    }
+                }
+                else
+                {
+                    using (StringFormat format = new StringFormat
+                    {
+                        LineAlignment = StringAlignment.Center,
+                        Trimming = StringTrimming.EllipsisCharacter,
+                        FormatFlags = StringFormatFlags.NoWrap
+                    })
+                    {
+                        for (int i = 0; i < entries.Count; i++)
                         {
-                            using (SolidBrush highlight = new SolidBrush(Color.FromArgb(200, 32, 96, 196)))
+                            Rectangle row = GetOrbMenuEntryBounds(i);
+                            OrbMenuEntry entry = entries[i];
+
+                            if (row.IsEmpty || entry.Kind == OrbMenuEntryKind.Separator)
                             {
-                                graphics.FillRectangle(highlight, row);
-                            }
-                        }
-
-                        if (entry.Kind == OrbMenuEntryKind.RecentHeader)
-                        {
-                            using (Font headerFont = new Font(font, FontStyle.Bold))
-                            {
-                                graphics.DrawString(
-                                    GetOrbMenuEntryText(entry, Ribbon),
-                                    headerFont,
-                                    Brushes.Black,
-                                    new Rectangle(row.Left + 6, row.Top, row.Width - 12, row.Height),
-                                    format);
-                            }
-
-                            continue;
-                        }
-
-                        Rectangle textBounds = row;
-                        textBounds.Offset(OrbMenuPad, 0);
-                        textBounds.Width -= OrbMenuPad * 2;
-
-                        bool hasIcon = entry.Kind == OrbMenuEntryKind.Item ||
-                                       entry.Kind == OrbMenuEntryKind.RecentItem ||
-                                       entry.Kind == OrbMenuEntryKind.OptionItem;
-
-                        if (hasIcon)
-                        {
-                            RibbonItem item = GetOrbMenuItem(entry);
-                            Image icon = item is RibbonButton button
-                                ? (button.Image ?? button.SmallImage)
-                                : item?.Image;
-
-                            if (icon != null)
-                            {
-                                int iconSize = Math.Min(18, row.Height - 4);
-                                graphics.DrawImage(
-                                    icon,
-                                    row.Left + 4,
-                                    row.Top + (row.Height - iconSize) / 2,
-                                    iconSize,
-                                    iconSize);
+                                continue;
                             }
 
-                            textBounds.Offset(OrbMenuIconWidth, 0);
-                            textBounds.Width -= OrbMenuIconWidth;
-                        }
+                            bool hovered = i == _orbMenuHover;
 
-                        graphics.DrawString(
-                            GetOrbMenuEntryText(entry, Ribbon),
-                            font,
-                            hovered ? Brushes.White : Brushes.Black,
-                            textBounds,
-                            format);
+                            if (hovered)
+                            {
+                                using (SolidBrush highlight = new SolidBrush(Color.FromArgb(200, 32, 96, 196)))
+                                {
+                                    graphics.FillRectangle(highlight, row);
+                                }
+                            }
+
+                            if (entry.Kind == OrbMenuEntryKind.RecentHeader)
+                            {
+                                using (Font headerFont = new Font(font, FontStyle.Bold))
+                                {
+                                    graphics.DrawString(
+                                        GetOrbMenuEntryText(entry, Ribbon),
+                                        headerFont,
+                                        Brushes.Black,
+                                        new Rectangle(row.Left + 6, row.Top, row.Width - 12, row.Height),
+                                        format);
+                                }
+
+                                continue;
+                            }
+
+                            Rectangle textBounds = row;
+                            textBounds.Offset(OrbMenuPad, 0);
+                            textBounds.Width -= OrbMenuPad * 2;
+
+                            bool hasIcon = entry.Kind == OrbMenuEntryKind.Item ||
+                                           entry.Kind == OrbMenuEntryKind.RecentItem ||
+                                           entry.Kind == OrbMenuEntryKind.OptionItem;
+
+                            if (hasIcon)
+                            {
+                                RibbonItem item = GetOrbMenuItem(entry);
+                                Image icon = item is RibbonButton button
+                                    ? (button.Image ?? button.SmallImage)
+                                    : item?.Image;
+
+                                if (icon != null)
+                                {
+                                    int iconSize = Math.Min(18, row.Height - 4);
+                                    graphics.DrawImage(
+                                        icon,
+                                        row.Left + 4,
+                                        row.Top + (row.Height - iconSize) / 2,
+                                        iconSize,
+                                        iconSize);
+                                }
+
+                                textBounds.Offset(OrbMenuIconWidth, 0);
+                                textBounds.Width -= OrbMenuIconWidth;
+                            }
+
+                            graphics.DrawString(
+                                GetOrbMenuEntryText(entry, Ribbon),
+                                font,
+                                hovered ? Brushes.White : Brushes.Black,
+                                textBounds,
+                                format);
+                        }
                     }
                 }
             }
