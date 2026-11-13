@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.11-net10</Version>
+	<Version>1.0.12-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo;harborsiem</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo, the RibbonWinForms contributors and harborsiem (WindowsRibbon).</Copyright>
@@ -21,7 +21,7 @@
     <Description>Office-style ribbon for Windows Forms, ported to .NET 10 with working out-of-process designer support. A fork of WindowsRibbon (https://github.com/harborsiem/WindowsRibbon) and RibbonWinForms - great work by harborsiem and Jose Menendez Poo. It also builds for .NET 8. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar are all editable in the designer, and no design-time tooling is needed at runtime.</Description>
     <!-- Hyphenated because nuget.org splits tags on spaces and semicolons: "Windows Ribbon" has to be
          windows-ribbon to survive as one tag. The same words are used as GitHub topics. -->
-    <PackageTags>winforms;ribbon;ribbon-framework;ribbon-control;ribbon-tools;windows-ribbon;win-ribbon;office-ribbon;windows-forms;winforms-designer;gui;dotnet;net8;net10;windowsribbon</PackageTags>
+    <PackageTags>winforms;ribbon;ribbon-framework;ribbon-control;ribbon-tools;windows-ribbon;win-ribbon;office-ribbon;windows-forms;winforms-designer;gui;dotnet;net8;net10;windowsribbon;microsoft-ribbon;ribbon-ui;winribbon</PackageTags>
     <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
