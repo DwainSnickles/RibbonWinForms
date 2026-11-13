@@ -244,6 +244,7 @@ namespace RibbonLib.RibbonDesign
         private static readonly string[] OrbItemMenuCaptions =
         {
             "Add Image...",
+            "Add from Resources...",
             "Clear Image"
         };
 
@@ -2691,6 +2692,10 @@ namespace RibbonLib.RibbonDesign
                 {
                     PickOrbItemImage(target);
                 }
+                else if (row == 1)
+                {
+                    PickOrbItemImageFromResources(target);
+                }
                 else
                 {
                     ClearOrbItemImage(target);
@@ -2811,14 +2816,76 @@ namespace RibbonLib.RibbonDesign
         }
 
         /// <summary>
+        /// Gets the image property an orb item uses: menu items expose <c>Image</c> (which
+        /// syncs <c>SmallImage</c>); the other orb buttons only draw <c>SmallImage</c> in the
+        /// drop-down's size mode, so that is what they get.
+        /// </summary>
+        private static string GetOrbItemImagePropertyName(RibbonItem item)
+        {
+            return item is RibbonOrbMenuItem ? "Image" : "SmallImage";
+        }
+
+        /// <summary>
+        /// Opens the standard image editor - the same resource picker the Properties grid
+        /// shows - and assigns the chosen image to the orb item.
+        /// </summary>
+        private void PickOrbItemImageFromResources(RibbonItem item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            PropertyDescriptor descriptor = TypeDescriptor
+                .GetProperties(item)[GetOrbItemImagePropertyName(item)];
+
+            UITypeEditor editor = descriptor?.GetEditor(typeof(UITypeEditor))
+                as UITypeEditor;
+
+            if (editor == null ||
+                editor.GetEditStyle() != UITypeEditorEditStyle.Modal)
+            {
+                return;
+            }
+
+            IDesignerHost host =
+                GetService(typeof(IDesignerHost)) as IDesignerHost;
+
+            object current = descriptor.GetValue(item);
+            object value;
+
+            try
+            {
+                value = editor.EditValue(null, host, current);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            if (value == null || ReferenceEquals(value, current) ||
+                !(value is Image picked))
+            {
+                return;
+            }
+
+            Size fit = GetOrbItemIconSize(item);
+
+            // ResizeImageToFit returns the picked image itself when it already fits; that
+            // is usually a shared resource image, so nothing here is ever disposed - the
+            // item owns whatever it is given.
+            Image image = ResizeImageToFit(picked, fit.Width, fit.Height);
+
+            AssignOrbItemImage(item, image);
+        }
+
+        /// <summary>
         /// Assigns an image to an orb item inside a designer transaction, so the change is
         /// undoable and serialized into the form's code like a Properties-grid edit.
         /// </summary>
         private void AssignOrbItemImage(RibbonItem item, Image image)
         {
-            // Menu items expose Image (which syncs SmallImage); the other orb buttons only
-            // draw SmallImage in the drop-down's size mode, so that is what they get.
-            string propertyName = item is RibbonOrbMenuItem ? "Image" : "SmallImage";
+            string propertyName = GetOrbItemImagePropertyName(item);
             PropertyDescriptor descriptor =
                 TypeDescriptor.GetProperties(item)[propertyName];
 
