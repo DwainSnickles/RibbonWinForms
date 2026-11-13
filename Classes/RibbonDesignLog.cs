@@ -10,8 +10,11 @@ namespace RibbonLib
     /// </summary>
     internal static class RibbonDesignLog
     {
-        private static readonly string LogPath =
-            Path.Combine(Path.GetTempPath(), "RibbonLibDesign.log");
+        // RIBBONLIB_DESIGN_LOG overrides the destination - test apps can point it at
+        // their project folder; otherwise it falls back to %TEMP%.
+        private static string LogPath =>
+            Environment.GetEnvironmentVariable("RIBBONLIB_DESIGN_LOG")
+            ?? Path.Combine(Path.GetTempPath(), "RibbonLibDesign.log");
 
         internal static void Write(string message)
         {
