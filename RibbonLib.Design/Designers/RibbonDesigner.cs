@@ -422,7 +422,13 @@ namespace RibbonLib.RibbonDesign
             transaction.Commit();
 
             Ribbon.OrbDropDown.SelectOnDesigner(item);
-            Ribbon.OrbDropDown.WrappedDropDown.Size = Ribbon.OrbDropDown.Size;
+
+            // The wrapped drop-down only exists once the real popup has been shown, which
+            // never happens at design time - the menu is painted on the surface instead.
+            if (Ribbon.OrbDropDown.WrappedDropDown != null)
+            {
+                Ribbon.OrbDropDown.WrappedDropDown.Size = Ribbon.OrbDropDown.Size;
+            }
         }
 
         /// <summary>
@@ -2020,8 +2026,18 @@ namespace RibbonLib.RibbonDesign
         private const int OrbMenuSeparatorHeight = 9;
         private const int OrbMenuIconWidth = 22;
         private const int OrbMenuButtonRowHeight = 22;
-        private const int OrbMenuAddButtonWidth = 44;
-        private const int OrbMenuSeparatorButtonWidth = 28;
+
+        /// <summary>
+        /// The captions on the blank menu's add buttons, in the same order
+        /// <see cref="GetOrbMenuGlyphButtonBounds"/> lays them out.
+        /// </summary>
+        private static readonly string[] OrbMenuGlyphButtonCaptions =
+        {
+            "New Menu Item",
+            "New Separator",
+            "New Recent Item",
+            "New Option Item"
+        };
 
         /// <summary>
         /// Gets whether the orb menu is drawn open on the design surface.
@@ -2201,14 +2217,14 @@ namespace RibbonLib.RibbonDesign
             if (entries.Count == 0)
             {
                 // With no items the real drop-down still shows its frame and the
-                // design-time "+" add glyphs, so the design surface does the same.
+                // design-time add buttons, so the design surface does the same.
                 if (!_orbMenuOpen)
                 {
                     return Rectangle.Empty;
                 }
 
-                width = 200;
-                height += OrbMenuButtonRowHeight;
+                width = 240;
+                height += OrbMenuButtonRowHeight * 2 + 6;
             }
             else
             {
@@ -2290,40 +2306,20 @@ namespace RibbonLib.RibbonDesign
 
         /// <summary>
         /// Gets the bounds of one of the four design-time add buttons shown on the blank
-        /// orb menu, in ribbon coordinates. Index 0 is the menu-item "+", 1 the separator
-        /// "---", 2 the recent-items "+" and 3 the option-items "+" - the same buttons the
-        /// real drop-down paints in design mode.
+        /// orb menu, in ribbon coordinates, laid out in a two-by-two grid. Index 0 adds a
+        /// menu item, 1 a separator, 2 a recent item and 3 an option item.
         /// </summary>
         private static Rectangle GetOrbMenuGlyphButtonBounds(Rectangle menu, int index)
         {
-            int y = menu.Top + OrbMenuPad;
-            int buttonWidth = index == 1
-                ? OrbMenuSeparatorButtonWidth
-                : OrbMenuAddButtonWidth;
-
             const int gap = 6;
-            int leftGroupX = menu.Left + OrbMenuPad + 8;
-            int rightGroupWidth = OrbMenuAddButtonWidth * 2 + gap;
-            int rightGroupX = menu.Right - OrbMenuPad - 8 - rightGroupWidth;
+            int cellWidth = (menu.Width - OrbMenuPad * 2 - gap) / 2;
+            int column = index % 2;
+            int row = index / 2;
 
-            int x;
-            switch (index)
-            {
-                case 0:
-                    x = leftGroupX;
-                    break;
-                case 1:
-                    x = leftGroupX + OrbMenuAddButtonWidth + gap;
-                    break;
-                case 2:
-                    x = rightGroupX;
-                    break;
-                default:
-                    x = rightGroupX + OrbMenuAddButtonWidth + gap;
-                    break;
-            }
+            int x = menu.Left + OrbMenuPad + column * (cellWidth + gap);
+            int y = menu.Top + OrbMenuPad + row * (OrbMenuButtonRowHeight + gap);
 
-            return new Rectangle(x, y, buttonWidth, OrbMenuButtonRowHeight);
+            return new Rectangle(x, y, cellWidth, OrbMenuButtonRowHeight);
         }
 
         /// <summary>
@@ -2549,8 +2545,8 @@ namespace RibbonLib.RibbonDesign
                 Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
                 List<OrbMenuEntry> entries = GetOrbMenuEntries();
 
-                // The blank menu shows the same design-time add buttons the real
-                // drop-down paints, so entries can be created straight from it.
+                // The blank menu shows design-time add buttons, so entries can be
+                // created straight from it.
                 if (entries.Count == 0)
                 {
                     using (StringFormat buttonFormat = StringFormatFactory.Center(StringTrimming.None))
@@ -2561,7 +2557,7 @@ namespace RibbonLib.RibbonDesign
                             Rectangle button = GetOrbMenuGlyphButtonBounds(bounds, i);
                             graphics.FillRectangle(buttonBrush, button);
                             graphics.DrawString(
-                                i == 1 ? "---" : "+",
+                                OrbMenuGlyphButtonCaptions[i],
                                 font,
                                 Brushes.White,
                                 button,
