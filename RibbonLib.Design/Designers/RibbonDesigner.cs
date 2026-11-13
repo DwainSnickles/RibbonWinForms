@@ -2842,6 +2842,13 @@ namespace RibbonLib.RibbonDesign
             UITypeEditor editor = descriptor?.GetEditor(typeof(UITypeEditor))
                 as UITypeEditor;
 
+            RibbonDesignLog.Write(
+                $"PickOrbItemImageFromResources: item={item?.GetType().Name} " +
+                $"prop={GetOrbItemImagePropertyName(item)} " +
+                $"descriptor={(descriptor == null ? "null" : "ok")} " +
+                $"editor={(editor == null ? "null" : editor.GetType().FullName)} " +
+                $"style={(editor == null ? "-" : editor.GetEditStyle().ToString())}");
+
             if (editor == null ||
                 editor.GetEditStyle() != UITypeEditorEditStyle.Modal)
             {
@@ -2863,10 +2870,14 @@ namespace RibbonLib.RibbonDesign
                     host,
                     current);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                RibbonDesignLog.Exception("PickOrbItemImageFromResources.EditValue", ex);
                 return;
             }
+
+            RibbonDesignLog.Write(
+                $"PickOrbItemImageFromResources result: {(value == null ? "null" : value.GetType().FullName)}");
 
             if (value == null || ReferenceEquals(value, current) ||
                 !(value is Image picked))
