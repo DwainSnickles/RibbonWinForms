@@ -1998,10 +1998,7 @@ namespace RibbonLib.RibbonDesign
             RecentItem,
             OptionItem,
             RecentHeader,
-            Separator,
-            AddMenu,
-            AddRecent,
-            AddOption
+            Separator
         }
 
         private readonly struct OrbMenuEntry
@@ -2021,7 +2018,6 @@ namespace RibbonLib.RibbonDesign
         private const int OrbMenuTextRowHeight = 20;
         private const int OrbMenuHeaderHeight = 18;
         private const int OrbMenuSeparatorHeight = 9;
-        private const int OrbMenuGlyphHeight = 24;
         private const int OrbMenuIconWidth = 22;
 
         /// <summary>
@@ -2095,8 +2091,7 @@ namespace RibbonLib.RibbonDesign
 
         /// <summary>
         /// Builds the list of rows the design-time orb menu shows: the menu items, then the
-        /// recent and option items, then the "+" glyphs that create new entries - mirroring
-        /// what the real drop-down offers.
+        /// recent and option items - mirroring what the real drop-down offers.
         /// </summary>
         private List<OrbMenuEntry> GetOrbMenuEntries()
         {
@@ -2142,14 +2137,6 @@ namespace RibbonLib.RibbonDesign
                 }
             }
 
-            if (entries.Count > 0)
-            {
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator));
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.AddMenu));
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.AddRecent));
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.AddOption));
-            }
-
             return entries;
         }
 
@@ -2166,10 +2153,6 @@ namespace RibbonLib.RibbonDesign
                     return OrbMenuHeaderHeight;
                 case OrbMenuEntryKind.Separator:
                     return OrbMenuSeparatorHeight;
-                case OrbMenuEntryKind.AddMenu:
-                case OrbMenuEntryKind.AddRecent:
-                case OrbMenuEntryKind.AddOption:
-                    return OrbMenuGlyphHeight;
                 default:
                     return OrbMenuTextRowHeight;
             }
@@ -2190,12 +2173,6 @@ namespace RibbonLib.RibbonDesign
                     return string.IsNullOrEmpty(ribbon.OrbDropDown.RecentItemsCaption)
                         ? "Recent Items"
                         : ribbon.OrbDropDown.RecentItemsCaption;
-                case OrbMenuEntryKind.AddMenu:
-                    return "+ Menu";
-                case OrbMenuEntryKind.AddRecent:
-                    return "+ Recent";
-                case OrbMenuEntryKind.AddOption:
-                    return "+ Options";
                 default:
                     return string.Empty;
             }
@@ -2293,22 +2270,6 @@ namespace RibbonLib.RibbonDesign
                 return new Rectangle(menu.Left + OrbMenuPad, y + 3, menu.Width - OrbMenuPad * 2, 1);
             }
 
-            if (entry.Kind == OrbMenuEntryKind.AddMenu ||
-                entry.Kind == OrbMenuEntryKind.AddRecent ||
-                entry.Kind == OrbMenuEntryKind.AddOption)
-            {
-                // The three add glyphs share one row.
-                int slot = entry.Kind == OrbMenuEntryKind.AddMenu ? 0 :
-                           entry.Kind == OrbMenuEntryKind.AddRecent ? 1 : 2;
-                int slotWidth = (menu.Width - OrbMenuPad * 2) / 3;
-
-                return new Rectangle(
-                    menu.Left + OrbMenuPad + slot * slotWidth,
-                    y,
-                    slotWidth - 2,
-                    height);
-            }
-
             return new Rectangle(menu.Left + OrbMenuPad, y, menu.Width - OrbMenuPad * 2, height);
         }
 
@@ -2401,15 +2362,6 @@ namespace RibbonLib.RibbonDesign
 
                     break;
                 }
-                case OrbMenuEntryKind.AddMenu:
-                    CreateOrbMenuItem(typeof(RibbonOrbMenuItem));
-                    break;
-                case OrbMenuEntryKind.AddRecent:
-                    CreateOrbRecentItem(typeof(RibbonOrbRecentItem));
-                    break;
-                case OrbMenuEntryKind.AddOption:
-                    CreateOrbOptionItem(typeof(RibbonOrbOptionButton));
-                    break;
             }
 
             return true;
