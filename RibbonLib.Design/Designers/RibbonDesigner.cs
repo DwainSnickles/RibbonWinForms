@@ -2452,7 +2452,7 @@ namespace RibbonLib.RibbonDesign
 
         /// <summary>
         /// Paints the open orb menu for an adorner glyph. The glyph's graphics are in adorner
-        /// coordinates, so they are translated back to ribbon coordinates first. Painting
+        /// coordinates, so they are translated by the ribbon's adorner offset first. Painting
         /// through the glyph matters because adornment painting is clipped to the control's
         /// bounds, while the menu is allowed to hang below the ribbon like the real drop-down.
         /// </summary>
@@ -2467,7 +2467,7 @@ namespace RibbonLib.RibbonDesign
 
             try
             {
-                graphics.TranslateTransform(-adornerOffset.X, -adornerOffset.Y);
+                graphics.TranslateTransform(adornerOffset.X, adornerOffset.Y);
                 PaintOrbMenu(graphics);
             }
             finally

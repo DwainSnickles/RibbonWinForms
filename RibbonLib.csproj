@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.7-net10</Version>
+	<Version>1.0.8-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
