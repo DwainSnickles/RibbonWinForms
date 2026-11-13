@@ -2856,7 +2856,12 @@ namespace RibbonLib.RibbonDesign
 
             try
             {
-                value = editor.EditValue(null, host, current);
+                // The image editor needs a context that names the component being edited,
+                // otherwise it cannot tell the resource picker which .resx to write to.
+                value = editor.EditValue(
+                    new OrbItemEditorContext(this, item, descriptor),
+                    host,
+                    current);
             }
             catch (Exception)
             {
@@ -2877,6 +2882,49 @@ namespace RibbonLib.RibbonDesign
             Image image = ResizeImageToFit(picked, fit.Width, fit.Height);
 
             AssignOrbItemImage(item, image);
+        }
+
+        /// <summary>
+        /// Minimal <see cref="ITypeDescriptorContext"/> for the orb item image editor: it
+        /// reports the item being edited and forwards service requests to the designer, which
+        /// is what lets the resource picker write into the hosting form's .resx.
+        /// </summary>
+        private sealed class OrbItemEditorContext : ITypeDescriptorContext
+        {
+            private readonly RibbonDesigner _designer;
+            private readonly object _instance;
+            private readonly PropertyDescriptor _property;
+
+            public OrbItemEditorContext(
+                RibbonDesigner designer,
+                object instance,
+                PropertyDescriptor property)
+            {
+                _designer = designer;
+                _instance = instance;
+                _property = property;
+            }
+
+            public IContainer Container =>
+                (_designer.GetService(typeof(IDesignerHost)) as IDesignerHost)?.Container;
+
+            public object Instance => _instance;
+
+            public PropertyDescriptor PropertyDescriptor => _property;
+
+            public void OnComponentChanged()
+            {
+            }
+
+            public bool OnComponentChanging()
+            {
+                return true;
+            }
+
+            public object GetService(Type serviceType)
+            {
+                return _designer.GetService(serviceType);
+            }
         }
 
         /// <summary>
