@@ -222,6 +222,31 @@ namespace RibbonLib.RibbonDesign
         /// </summary>
         private System.Windows.Forms.Timer _orbMenuWatcher;
 
+        /// <summary>
+        /// The orb menu item the design-time context menu acts on, or <c>null</c> when the
+        /// menu is closed. Opened by right-clicking an entry of the orb menu.
+        /// </summary>
+        private RibbonItem _orbItemMenuTarget;
+
+        /// <summary>
+        /// Where the orb item context menu opened, in ribbon coordinates.
+        /// </summary>
+        private Point _orbItemMenuLocation;
+
+        /// <summary>
+        /// The context menu row under the mouse, or -1.
+        /// </summary>
+        private int _orbItemMenuHover = -1;
+
+        /// <summary>
+        /// The captions of the context menu shown on right-clicking an orb menu entry.
+        /// </summary>
+        private static readonly string[] OrbItemMenuCaptions =
+        {
+            "Add Image...",
+            "Clear Image"
+        };
+
         #endregion
 
         #region Ctor
@@ -685,7 +710,7 @@ namespace RibbonLib.RibbonDesign
             }
 
             // An open orb menu takes the click before anything painted underneath it.
-            if (HandleOrbMenuClick(x, y))
+            if (HandleOrbMenuClick(x, y, rightButton))
             {
                 return true;
             }
@@ -2104,6 +2129,7 @@ namespace RibbonLib.RibbonDesign
             _orbMenuOpen = false;
             _orbMenuHover = -1;
             _orbMenuWatcher?.Stop();
+            CloseOrbItemMenu();
 
             if (Ribbon != null && !Ribbon.IsDisposed)
             {
@@ -2394,11 +2420,19 @@ namespace RibbonLib.RibbonDesign
 
         /// <summary>
         /// Handles a click on the open orb menu: selects the entry under the mouse, or adds a
-        /// new orb item for the "+" glyphs. Returns <c>false</c> when the point is not on the
+        /// new orb item for the "+" glyphs. A right click on an entry selects it and opens the
+        /// design-time context menu. Returns <c>false</c> when the point is not on the
         /// menu so the caller can keep its normal click handling.
         /// </summary>
-        public bool HandleOrbMenuClick(int x, int y)
+        public bool HandleOrbMenuClick(int x, int y, bool rightButton = false)
         {
+            // The item context menu opens inside the orb menu's bounds, so it has to be
+            // checked first or its rows would select whatever entry sits underneath.
+            if (IsPointOnOrbItemMenu(x, y))
+            {
+                return true;
+            }
+
             if (!IsPointOnOrbMenu(x, y))
             {
                 return false;
@@ -2410,6 +2444,11 @@ namespace RibbonLib.RibbonDesign
             // like the glyphs on the real drop-down do in design mode.
             if (entries.Count == 0)
             {
+                if (rightButton)
+                {
+                    return true;
+                }
+
                 Rectangle menu = GetOrbMenuBounds();
 
                 for (int i = 0; i < 4; i++)
@@ -2460,6 +2499,11 @@ namespace RibbonLib.RibbonDesign
                     if (item != null)
                     {
                         dropDown.SelectOnDesigner(item);
+
+                        if (rightButton)
+                        {
+                            OpenOrbItemMenu(item, x, y);
+                        }
                     }
 
                     break;
@@ -2468,6 +2512,475 @@ namespace RibbonLib.RibbonDesign
 
             return true;
         }
+
+        #region Orb item context menu (design surface)
+
+        /// <summary>
+        /// Gets whether the orb item context menu is open.
+        /// </summary>
+        public bool IsOrbItemMenuOpen => _orbItemMenuTarget != null;
+
+        /// <summary>
+        /// Opens the context menu for an orb menu item at a point in ribbon coordinates.
+        /// </summary>
+        public void OpenOrbItemMenu(RibbonItem item, int x, int y)
+        {
+            if (item == null || Ribbon == null || Ribbon.IsDisposed)
+            {
+                return;
+            }
+
+            _orbItemMenuTarget = item;
+            _orbItemMenuLocation = new Point(x, y);
+            _orbItemMenuHover = -1;
+
+            Ribbon?.Invalidate();
+            _pillsAdorner?.Invalidate();
+        }
+
+        /// <summary>
+        /// Closes the orb item context menu, if open.
+        /// </summary>
+        public void CloseOrbItemMenu()
+        {
+            if (_orbItemMenuTarget == null)
+            {
+                return;
+            }
+
+            _orbItemMenuTarget = null;
+            _orbItemMenuHover = -1;
+
+            Ribbon?.Invalidate();
+            _pillsAdorner?.Invalidate();
+        }
+
+        /// <summary>
+        /// Works out the bounds of the orb item context menu in ribbon coordinates. It opens
+        /// at the click point and is kept inside the ribbon's width, but may hang below the
+        /// bottom edge like the orb menu itself.
+        /// </summary>
+        public Rectangle GetOrbItemMenuBounds()
+        {
+            if (_orbItemMenuTarget == null || Ribbon == null || Ribbon.IsDisposed)
+            {
+                return Rectangle.Empty;
+            }
+
+            Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
+            int width = 0;
+
+            foreach (string caption in OrbItemMenuCaptions)
+            {
+                width = Math.Max(
+                    width,
+                    TextRenderer.MeasureText(caption, font).Width);
+            }
+
+            width += 20;
+            int height = OrbItemMenuCaptions.Length * OrbItemMenuRowHeight + 8;
+
+            int x = _orbItemMenuLocation.X;
+            int y = _orbItemMenuLocation.Y;
+
+            if (x + width > Ribbon.Width - 1)
+            {
+                x = Math.Max(1, Ribbon.Width - 1 - width);
+            }
+
+            return new Rectangle(x, y, width, height);
+        }
+
+        /// <summary>
+        /// Height of one row in the orb item context menu.
+        /// </summary>
+        private const int OrbItemMenuRowHeight = 20;
+
+        /// <summary>
+        /// Gets the bounds of one context menu row, in ribbon coordinates.
+        /// </summary>
+        private Rectangle GetOrbItemMenuRowBounds(int index)
+        {
+            Rectangle menu = GetOrbItemMenuBounds();
+
+            if (menu.IsEmpty || index < 0 || index >= OrbItemMenuCaptions.Length)
+            {
+                return Rectangle.Empty;
+            }
+
+            return new Rectangle(
+                menu.Left + 4,
+                menu.Top + 4 + index * OrbItemMenuRowHeight,
+                menu.Width - 8,
+                OrbItemMenuRowHeight);
+        }
+
+        /// <summary>
+        /// Gets the context menu row under a point, or -1.
+        /// </summary>
+        private int GetOrbItemMenuRowIndex(int x, int y)
+        {
+            if (_orbItemMenuTarget == null || !GetOrbItemMenuBounds().Contains(x, y))
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < OrbItemMenuCaptions.Length; i++)
+            {
+                if (GetOrbItemMenuRowBounds(i).Contains(x, y))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Gets whether a point in ribbon coordinates is on the orb item context menu.
+        /// </summary>
+        public bool IsPointOnOrbItemMenu(int x, int y)
+        {
+            return _orbItemMenuTarget != null && GetOrbItemMenuBounds().Contains(x, y);
+        }
+
+        /// <summary>
+        /// Tracks which context menu row the mouse is over so it can highlight, and reports
+        /// whether the point is on the menu (for the hand cursor).
+        /// </summary>
+        public bool UpdateOrbItemMenuHover(int x, int y)
+        {
+            int hovered = IsPointOnOrbItemMenu(x, y) ? GetOrbItemMenuRowIndex(x, y) : -1;
+
+            if (hovered != _orbItemMenuHover)
+            {
+                _orbItemMenuHover = hovered;
+                Ribbon?.Invalidate();
+                _pillsAdorner?.Invalidate();
+            }
+
+            return hovered >= 0 || IsPointOnOrbItemMenu(x, y);
+        }
+
+        /// <summary>
+        /// Handles a click on the orb item context menu: runs the row under the mouse. Returns
+        /// <c>false</c> when the point is not on the menu.
+        /// </summary>
+        public bool HandleOrbItemMenuClick(int x, int y, MouseButtons button)
+        {
+            if (_orbItemMenuTarget == null || !IsPointOnOrbItemMenu(x, y))
+            {
+                return false;
+            }
+
+            // The menu opens on mouse-down, so the right-button release that follows must
+            // not dismiss it - only a left click runs a row.
+            if (button != MouseButtons.Left)
+            {
+                return true;
+            }
+
+            int row = GetOrbItemMenuRowIndex(x, y);
+            RibbonItem target = _orbItemMenuTarget;
+
+            CloseOrbItemMenu();
+
+            if (row >= 0 && target != null)
+            {
+                if (row == 0)
+                {
+                    PickOrbItemImage(target);
+                }
+                else
+                {
+                    ClearOrbItemImage(target);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// The largest icon size each kind of orb entry is resized to fit: menu items get the
+        /// tallest rows in the real drop-down, recent items the shortest.
+        /// </summary>
+        private static Size GetOrbItemIconSize(RibbonItem item)
+        {
+            if (item is RibbonOrbMenuItem)
+            {
+                return new Size(32, 32);
+            }
+
+            if (item is RibbonOrbRecentItem)
+            {
+                return new Size(16, 16);
+            }
+
+            return new Size(24, 24);
+        }
+
+        /// <summary>
+        /// Opens a file picker and assigns the chosen image to the orb item, resized to fit
+        /// the menu row. The image goes to <c>Image</c> on a menu item - whose setter also
+        /// updates <c>SmallImage</c> - and to <c>SmallImage</c> on the other orb buttons,
+        /// which is the image the drop-down actually draws in its size mode.
+        /// </summary>
+        private void PickOrbItemImage(RibbonItem item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            string fileName;
+
+            using (OpenFileDialog dialog = new OpenFileDialog())
+            {
+                dialog.Title = "Add Image";
+                dialog.Filter =
+                    "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.ico|All Files|*.*";
+                dialog.CheckFileExists = true;
+
+                if (dialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                fileName = dialog.FileName;
+            }
+
+            Image source;
+
+            try
+            {
+                source = new Bitmap(fileName);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            Size fit = GetOrbItemIconSize(item);
+            Image image = ResizeImageToFit(source, fit.Width, fit.Height);
+
+            try
+            {
+                AssignOrbItemImage(item, image);
+            }
+            finally
+            {
+                // The assigned image is owned by the item now; only the original file
+                // bitmap is disposed, and only when a resized copy was assigned instead.
+                if (!ReferenceEquals(image, source))
+                {
+                    source.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Scales an image down - never up - so it fits inside the given box, preserving its
+        /// aspect ratio.
+        /// </summary>
+        private static Image ResizeImageToFit(Image source, int maxWidth, int maxHeight)
+        {
+            double scale = Math.Min(
+                1.0,
+                Math.Min(
+                    (double)maxWidth / source.Width,
+                    (double)maxHeight / source.Height));
+
+            if (scale >= 0.999)
+            {
+                return source;
+            }
+
+            int width = Math.Max(1, (int)Math.Round(source.Width * scale));
+            int height = Math.Max(1, (int)Math.Round(source.Height * scale));
+
+            Bitmap resized = new Bitmap(width, height);
+
+            using (Graphics g = Graphics.FromImage(resized))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                g.DrawImage(source, 0, 0, width, height);
+            }
+
+            return resized;
+        }
+
+        /// <summary>
+        /// Assigns an image to an orb item inside a designer transaction, so the change is
+        /// undoable and serialized into the form's code like a Properties-grid edit.
+        /// </summary>
+        private void AssignOrbItemImage(RibbonItem item, Image image)
+        {
+            // Menu items expose Image (which syncs SmallImage); the other orb buttons only
+            // draw SmallImage in the drop-down's size mode, so that is what they get.
+            string propertyName = item is RibbonOrbMenuItem ? "Image" : "SmallImage";
+            PropertyDescriptor descriptor =
+                TypeDescriptor.GetProperties(item)[propertyName];
+
+            IDesignerHost host =
+                GetService(typeof(IDesignerHost)) as IDesignerHost;
+
+            object oldValue = descriptor?.GetValue(item);
+
+            DesignerTransaction transaction = host?.CreateTransaction(
+                "SetOrbItemImage_" + (Component?.Site?.Name ?? "ribbon"));
+
+            try
+            {
+                if (descriptor != null && transaction != null)
+                {
+                    RaiseComponentChanging(descriptor);
+                    descriptor.SetValue(item, image);
+                    RaiseComponentChanged(descriptor, oldValue, image);
+                }
+                else
+                {
+                    descriptor?.SetValue(item, image);
+                }
+
+                Ribbon?.OnRegionsChanged();
+                Ribbon?.Invalidate(true);
+                _pillsAdorner?.Invalidate();
+
+                transaction?.Commit();
+            }
+            catch
+            {
+                transaction?.Cancel();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Clears the image of an orb item inside a designer transaction.
+        /// </summary>
+        private void ClearOrbItemImage(RibbonItem item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            IDesignerHost host =
+                GetService(typeof(IDesignerHost)) as IDesignerHost;
+
+            DesignerTransaction transaction = host?.CreateTransaction(
+                "ClearOrbItemImage_" + (Component?.Site?.Name ?? "ribbon"));
+
+            try
+            {
+                // Clear both slots: menu items sync them through Image, but the other orb
+                // buttons can carry an Image and a SmallImage independently.
+                foreach (string propertyName in new[] { "Image", "SmallImage" })
+                {
+                    PropertyDescriptor descriptor =
+                        TypeDescriptor.GetProperties(item)[propertyName];
+
+                    if (descriptor == null ||
+                        descriptor.GetValue(item) == null)
+                    {
+                        continue;
+                    }
+
+                    object oldValue = descriptor.GetValue(item);
+                    RaiseComponentChanging(descriptor);
+                    descriptor.SetValue(item, null);
+                    RaiseComponentChanged(descriptor, oldValue, null);
+                }
+
+                Ribbon?.OnRegionsChanged();
+                Ribbon?.Invalidate(true);
+                _pillsAdorner?.Invalidate();
+
+                transaction?.Commit();
+            }
+            catch
+            {
+                transaction?.Cancel();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Paints the orb item context menu on the design surface.
+        /// </summary>
+        private void PaintOrbItemMenu(Graphics graphics)
+        {
+            if (graphics == null || _orbItemMenuTarget == null)
+            {
+                return;
+            }
+
+            Rectangle bounds = GetOrbItemMenuBounds();
+
+            if (bounds.IsEmpty)
+            {
+                return;
+            }
+
+            SmoothingMode smoothing = graphics.SmoothingMode;
+
+            try
+            {
+                graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (GraphicsPath path = RibbonProfessionalRenderer.RoundRectangle(bounds, 4))
+                using (SolidBrush background = new SolidBrush(Color.FromArgb(252, 252, 252)))
+                using (Pen border = new Pen(SystemColors.ControlDarkDark))
+                {
+                    graphics.FillPath(background, path);
+                    graphics.DrawPath(border, path);
+                }
+
+                Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
+
+                using (StringFormat format = new StringFormat
+                {
+                    LineAlignment = StringAlignment.Center,
+                    Trimming = StringTrimming.EllipsisCharacter,
+                    FormatFlags = StringFormatFlags.NoWrap
+                })
+                {
+                    for (int i = 0; i < OrbItemMenuCaptions.Length; i++)
+                    {
+                        Rectangle row = GetOrbItemMenuRowBounds(i);
+
+                        if (row.IsEmpty)
+                        {
+                            continue;
+                        }
+
+                        bool hovered = i == _orbItemMenuHover;
+
+                        if (hovered)
+                        {
+                            using (SolidBrush highlight = new SolidBrush(Color.FromArgb(200, 32, 96, 196)))
+                            {
+                                graphics.FillRectangle(highlight, row);
+                            }
+                        }
+
+                        graphics.DrawString(
+                            OrbItemMenuCaptions[i],
+                            font,
+                            hovered ? Brushes.White : Brushes.Black,
+                            new Rectangle(row.Left + 6, row.Top, row.Width - 12, row.Height),
+                            format);
+                    }
+                }
+            }
+            finally
+            {
+                graphics.SmoothingMode = smoothing;
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// Resolves the ribbon item an entry points at.
@@ -2498,7 +3011,8 @@ namespace RibbonLib.RibbonDesign
             Rectangle orb = Ribbon.OrbBounds;
             orb.Inflate(6, 6);
 
-            if (!orb.Contains(pointer) && !IsPointOnOrbMenu(pointer.X, pointer.Y))
+            if (!orb.Contains(pointer) && !IsPointOnOrbMenu(pointer.X, pointer.Y) &&
+                !IsPointOnOrbItemMenu(pointer.X, pointer.Y))
             {
                 CloseOrbMenu();
             }
@@ -2523,6 +3037,7 @@ namespace RibbonLib.RibbonDesign
             {
                 graphics.TranslateTransform(adornerOffset.X, adornerOffset.Y);
                 PaintOrbMenu(graphics);
+                PaintOrbItemMenu(graphics);
             }
             finally
             {

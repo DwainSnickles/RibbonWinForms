@@ -77,6 +77,17 @@ namespace RibbonLib
                         area = area.IsEmpty ? menu : Rectangle.Union(area, menu);
                     }
 
+                    // The orb item context menu can also hang below the ribbon.
+                    Rectangle itemMenu = _designer == null
+                        ? Rectangle.Empty
+                        : _designer.GetOrbItemMenuBounds();
+
+                    if (!itemMenu.IsEmpty)
+                    {
+                        itemMenu.Offset(edge);
+                        area = area.IsEmpty ? itemMenu : Rectangle.Union(area, itemMenu);
+                    }
+
                     return area;
                 }
                 catch (ObjectDisposedException)
@@ -101,6 +112,13 @@ namespace RibbonLib
             if (!TryToRibbonPoint(p, out int x, out int y))
             {
                 return null;
+            }
+
+            // The orb item context menu is live: hand cursor and row highlight while over it.
+            if (_designer.IsPointOnOrbItemMenu(x, y))
+            {
+                _designer.UpdateOrbItemMenuHover(x, y);
+                return Cursors.Hand;
             }
 
             // The open orb menu is live: hand cursor and row highlight while over it.
@@ -173,7 +191,8 @@ namespace RibbonLib
                 // when they are past the control's bottom edge.
                 return x >= 0 && y >= 0 && x < _ribbon.Width &&
                     (y < _ribbon.Height ||
-                     (_designer != null && _designer.IsPointOnOrbMenu(x, y)));
+                     (_designer != null && (_designer.IsPointOnOrbMenu(x, y) ||
+                                            _designer.IsPointOnOrbItemMenu(x, y))));
             }
             catch (ObjectDisposedException)
             {
@@ -210,9 +229,16 @@ namespace RibbonLib
                 g is RibbonAddPillGlyph pill &&
                 pill.TryToRibbonPoint(adornerCoordinates, out int x, out int y))
             {
+                // An open orb item context menu takes the click first: it either runs the
+                // row under the mouse or dismisses itself.
+                if (_designer.HandleOrbItemMenuClick(x, y, button))
+                {
+                    return base.OnMouseUp(g, button, adornerCoordinates);
+                }
+
                 // An open orb menu takes the click first: it either picks an entry or adds
                 // one, so a stray click can never select whatever is painted underneath.
-                if (_designer.HandleOrbMenuClick(x, y))
+                if (_designer.HandleOrbMenuClick(x, y, button == MouseButtons.Right))
                 {
                     return base.OnMouseUp(g, button, adornerCoordinates);
                 }
