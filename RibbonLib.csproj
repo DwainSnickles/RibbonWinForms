@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.5-net10</Version>
+	<Version>1.0.6-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo and the RibbonWinForms contributors.</Copyright>
@@ -21,13 +21,13 @@
     <Description>Office-style ribbon for Windows Forms, ported to .NET 10 with working out-of-process designer support. A fork of RibbonWinForms. It also builds for .NET 8. Tabs, panels, buttons, combo boxes, item groups, button lists, the orb menu, contexts and the quick access toolbar are all editable in the designer, and no design-time tooling is needed at runtime.</Description>
     <!-- Hyphenated because nuget.org splits tags on spaces and semicolons: "Windows Ribbon" has to be
          windows-ribbon to survive as one tag. The same words are used as GitHub topics. -->
-    <PackageTags>winforms;ribbon;ribbon-framework;ribbon-control;ribbon-tools;windows-ribbon;win-ribbon;office-ribbon;windows-forms;winforms-designer;gui;dotnet;net8;net10</PackageTags>
+    <PackageTags>winforms;ribbon;ribbon-framework;ribbon-control;ribbon-tools;windows-ribbon;win-ribbon;office-ribbon;windows-forms;winforms-designer;gui;dotnet;net8;net10;windowsribbon</PackageTags>
     <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Clicking a ribbon tab in the designer now switches the tab and shows that tab's page. Tabs are matched against the bounds the design surface draws instead of the ribbon's internal tab bookkeeping, which the design server can leave stale, and the tab strip answers the design server's hit test with a cursor so the click reaches the ribbon designer at all. The runtime API is unchanged from 1.0.4-net10.</PackageReleaseNotes>
+    <PackageReleaseNotes>Clicking the orb in the designer now opens the orb menu on the design surface. The real drop-down is a top-level window the designer process cannot keep on screen, so the designer paints the menu itself - menu, recent and option items with their icons, row highlighting, click-to-select, and the "+" glyphs that add new entries - the same approach the panel "Add Control" menu already used. The runtime API is unchanged from 1.0.5-net10.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

@@ -64,6 +64,19 @@ namespace RibbonLib
 
                     area.Offset(edge);
 
+                    // The design-time orb menu hangs below the orb and can run past the
+                    // ribbon's bottom edge, so the glyph has to cover it too or clicks on
+                    // the menu would fall through to the design surface.
+                    Rectangle menu = _designer == null
+                        ? Rectangle.Empty
+                        : _designer.GetOrbMenuBounds();
+
+                    if (!menu.IsEmpty)
+                    {
+                        menu.Offset(edge);
+                        area = area.IsEmpty ? menu : Rectangle.Union(area, menu);
+                    }
+
                     return area;
                 }
                 catch (ObjectDisposedException)
@@ -88,6 +101,13 @@ namespace RibbonLib
             if (!TryToRibbonPoint(p, out int x, out int y))
             {
                 return null;
+            }
+
+            // The open orb menu is live: hand cursor and row highlight while over it.
+            if (_designer.IsPointOnOrbMenu(x, y))
+            {
+                _designer.UpdateOrbMenuHover(x, y);
+                return Cursors.Hand;
             }
 
             // A tab always answers with a cursor: the surface only delivers a click to a glyph
@@ -135,7 +155,11 @@ namespace RibbonLib
                 x = adornerPoint.X - edge.X;
                 y = adornerPoint.Y - edge.Y;
 
-                return x >= 0 && y >= 0 && x < _ribbon.Width && y < _ribbon.Height;
+                // The orb menu may hang below the ribbon, so points inside it count even
+                // when they are past the control's bottom edge.
+                return x >= 0 && y >= 0 && x < _ribbon.Width &&
+                    (y < _ribbon.Height ||
+                     (_designer != null && _designer.IsPointOnOrbMenu(x, y)));
             }
             catch (ObjectDisposedException)
             {
@@ -172,6 +196,13 @@ namespace RibbonLib
                 g is RibbonAddPillGlyph pill &&
                 pill.TryToRibbonPoint(adornerCoordinates, out int x, out int y))
             {
+                // An open orb menu takes the click first: it either picks an entry or adds
+                // one, so a stray click can never select whatever is painted underneath.
+                if (_designer.HandleOrbMenuClick(x, y))
+                {
+                    return base.OnMouseUp(g, button, adornerCoordinates);
+                }
+
                 // A pill adds; anything else the glyph covered is there to be selected, so the
                 // tab, panel or item under the click can be edited in the Properties window.
                 if (!_designer.HandlePillAt(x, y, button == MouseButtons.Right))

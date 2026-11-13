@@ -160,6 +160,31 @@ namespace RibbonLib
         private static MethodInfo? _updatePillHover;
         private static MethodInfo? _handleRibbonMouseUp;
         private static MethodInfo? _pillMouseDown;
+        private static MethodInfo? _toggleOrbMenu;
+
+        /// <summary>
+        /// Hands an orb click to the designer, which draws the orb menu on the design surface
+        /// because the real drop-down cannot be shown by the designer process.
+        /// </summary>
+        /// <returns><c>true</c> when a designer handled the click.</returns>
+        internal static bool TryToggleOrbMenu(Ribbon ribbon)
+        {
+            object? designer = FindDesigner(ribbon);
+
+            if (designer == null)
+                return false;
+
+            try
+            {
+                Cache(designer.GetType());
+
+                return _toggleOrbMenu?.Invoke(designer, null) is bool handled && handled;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Gets the designer that owns the ribbon, or <c>null</c> outside the designer.
@@ -201,6 +226,8 @@ namespace RibbonLib
                 "OnRibbonPillMouseDown", Instance, null, new[] { typeof(int), typeof(int), typeof(bool) }, null);
             _handleRibbonMouseUp = owner.GetMethod(
                 "HandleRibbonMouseUp", Static, null, new[] { typeof(Ribbon), typeof(int), typeof(int), typeof(bool) }, null);
+            _toggleOrbMenu = owner.GetMethod(
+                "ToggleOrbMenu", Instance, null, Type.EmptyTypes, null);
 
             _cachedOwner = owner;
         }

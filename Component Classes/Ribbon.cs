@@ -1847,13 +1847,18 @@ namespace RibbonLib
 		/// <param name="e">event data</param>
 		internal virtual void OnOrbClicked(EventArgs e)
 		{
-			if (OrbPressed)
+			// At design time the drop-down is a top-level window the designer process cannot
+			// keep on screen, so the designer draws the menu on the surface instead.
+			if (!RibbonDesignTime.TryToggleOrbMenu(this))
 			{
-				RibbonPopupManager.Dismiss(RibbonPopupManager.DismissReason.ItemClicked);
-			}
-			else
-			{
-				ShowOrbDropDown();
+				if (OrbPressed)
+				{
+					RibbonPopupManager.Dismiss(RibbonPopupManager.DismissReason.ItemClicked);
+				}
+				else
+				{
+					ShowOrbDropDown();
+				}
 			}
 
 			if (OrbClicked != null)
