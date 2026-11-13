@@ -407,6 +407,12 @@ namespace RibbonLib.RibbonDesign
             if (Ribbon == null) return;
 
             IDesignerHost host = GetService(typeof(IDesignerHost)) as IDesignerHost;
+
+            if (host == null || Component?.Site == null)
+            {
+                return;
+            }
+
             DesignerTransaction transaction = host.CreateTransaction("AddRibbonOrbItem_" + Component.Site.Name);
             MemberDescriptor member = TypeDescriptor.GetProperties(Ribbon.OrbDropDown)[collectionName];
             RaiseComponentChanging(member);

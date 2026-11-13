@@ -397,6 +397,14 @@ namespace RibbonLib
         /// </summary>
         private void UpdateRegions()
         {
+            // The drop-down is never shown at design time, so it has no window handle and
+            // CreateGraphics below would throw. The design surface lays the orb menu out
+            // itself and does not need these bounds.
+            if (!IsHandleCreated)
+            {
+                return;
+            }
+
             int curtop = 0;
             int curright = 0;
             int menuItemHeight = 44;
