@@ -19,6 +19,21 @@ namespace RibbonLib
 
         protected override object CreateInstance(Type itemType)
         {
+            try
+            {
+                return CreateInstanceCore(itemType);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception("RibbonOrbOptionButtonCollectionEditor.CreateInstance", ex);
+                throw;
+            }
+        }
+
+        private object CreateInstanceCore(Type itemType)
+        {
+            RibbonDesignLog.Write($"CreateInstance asked for {itemType?.FullName ?? "null"}");
+
             // The editor can ask for the collection's element type, and RibbonItem is
             // abstract. Fall back to the concrete item type instead of throwing.
             if (itemType == null || itemType.IsAbstract)

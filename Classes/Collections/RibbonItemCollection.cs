@@ -115,6 +115,19 @@ namespace RibbonLib
 
         public override void Add(RibbonItem item)
         {
+            try
+            {
+                AddCore(item);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception("RibbonItemCollection.Add", ex);
+                throw;
+            }
+        }
+
+        private void AddCore(RibbonItem item)
+        {
             CheckRestrictions(item);
 
             item.SetOwner(Owner);
@@ -147,6 +160,19 @@ namespace RibbonLib
         }
 
         public override void Insert(int index, RibbonItem item)
+        {
+            try
+            {
+                InsertCore(index, item);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception("RibbonItemCollection.Insert", ex);
+                throw;
+            }
+        }
+
+        private void InsertCore(int index, RibbonItem item)
         {
             CheckRestrictions(item);
 

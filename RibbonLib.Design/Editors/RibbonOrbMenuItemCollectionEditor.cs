@@ -26,6 +26,21 @@ namespace RibbonLib
 
         protected override object CreateInstance(Type itemType)
         {
+            try
+            {
+                return CreateInstanceCore(itemType);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception("RibbonOrbMenuItemCollectionEditor.CreateInstance", ex);
+                throw;
+            }
+        }
+
+        private object CreateInstanceCore(Type itemType)
+        {
+            RibbonDesignLog.Write($"CreateInstance asked for {itemType?.FullName ?? "null"}");
+
             if (itemType == typeof(RibbonOrbMenuItem))
             {
                 return new RibbonOrbMenuItem();
