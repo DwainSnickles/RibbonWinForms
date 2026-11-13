@@ -2229,7 +2229,7 @@ namespace RibbonLib.RibbonDesign
                     return Rectangle.Empty;
                 }
 
-                width = 240;
+                width = 300;
                 height += OrbMenuButtonRowHeight * 2 + 6;
             }
             else
@@ -2259,7 +2259,7 @@ namespace RibbonLib.RibbonDesign
                     width = Math.Max(width, textWidth + OrbMenuPad * 2 + 8);
                 }
 
-                width = Math.Max(150, Math.Min(width, 240));
+                width = Math.Max(150, Math.Min(width, 300));
             }
 
             int x = Ribbon.OrbBounds.Left;
