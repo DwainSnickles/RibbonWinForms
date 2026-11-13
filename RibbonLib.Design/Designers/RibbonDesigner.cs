@@ -2229,7 +2229,20 @@ namespace RibbonLib.RibbonDesign
                     return Rectangle.Empty;
                 }
 
-                width = 300;
+                // Size the frame to the widest button caption so the labels are not
+                // truncated. GetOrbMenuGlyphButtonBounds uses a 6px gap and halves
+                // the remaining width between the two columns.
+                Font buttonFont = Ribbon.Font ?? SystemFonts.DefaultFont;
+                int captionWidth = 0;
+
+                foreach (string caption in OrbMenuGlyphButtonCaptions)
+                {
+                    captionWidth = Math.Max(
+                        captionWidth,
+                        TextRenderer.MeasureText(caption, buttonFont).Width);
+                }
+
+                width = OrbMenuPad * 2 + 6 + (captionWidth + 20) * 2;
                 height += OrbMenuButtonRowHeight * 2 + 6;
             }
             else
@@ -2259,7 +2272,7 @@ namespace RibbonLib.RibbonDesign
                     width = Math.Max(width, textWidth + OrbMenuPad * 2 + 8);
                 }
 
-                width = Math.Max(150, Math.Min(width, 300));
+                width = Math.Max(150, width);
             }
 
             int x = Ribbon.OrbBounds.Left;

@@ -418,6 +418,8 @@ namespace RibbonLib
             {
                 #region important to do the item max width check before the ContentBounds and other stuff is used (internal Property stuff)
                 int itemMaxWidth = 0;
+                int recentMaxWidth = 0;
+                int optionsWidth = 0;
                 using (Graphics g = CreateGraphics())
                 {
                     foreach (RibbonItem item in MenuItems)
@@ -426,10 +428,28 @@ namespace RibbonLib
                         if (width > itemMaxWidth)
                             itemMaxWidth = width;
                     }
+                    foreach (RibbonItem item in RecentItems)
+                    {
+                        int width = item.MeasureSize(this, new RibbonElementMeasureSizeEventArgs(g, RibbonElementSizeMode.DropDown)).Width;
+                        if (width > recentMaxWidth)
+                            recentMaxWidth = width;
+                    }
+                    foreach (RibbonItem item in OptionItems)
+                    {
+                        optionsWidth += item.MeasureSize(this, new RibbonElementMeasureSizeEventArgs(g, RibbonElementSizeMode.DropDown)).Width + OptionItemsPadding;
+                    }
                 }
-                itemMaxWidth = Math.Min(itemMaxWidth, ContentBounds.Width - ContentRecentItemsMinWidth);
-                itemMaxWidth = Math.Max(itemMaxWidth, ContentButtonsMinWidth);
-                _contentButtonsWidth = itemMaxWidth;
+                _contentButtonsWidth = Math.Max(itemMaxWidth, ContentButtonsMinWidth);
+
+                // Autosize the whole drop-down to its content: the buttons pane, the
+                // recent-items pane (collapsed when it has no items or caption) and
+                // the bottom option-button row.
+                int recentPaneWidth = RecentItems.Count > 0 || !string.IsNullOrEmpty(RecentItemsCaption)
+                    ? Math.Max(recentMaxWidth + 8, ContentRecentItemsMinWidth)
+                    : 0;
+
+                int contentWidth = Math.Max(_contentButtonsWidth + recentPaneWidth, optionsWidth);
+                Width = ContentMargin.Horizontal + contentWidth;
                 #endregion
             }
 
