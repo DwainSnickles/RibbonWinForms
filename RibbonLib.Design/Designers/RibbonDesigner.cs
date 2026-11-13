@@ -2730,7 +2730,7 @@ namespace RibbonLib.RibbonDesign
         /// updates <c>SmallImage</c> - and to <c>SmallImage</c> on the other orb buttons,
         /// which is the image the drop-down actually draws in its size mode.
         /// </summary>
-        private void PickOrbItemImage(RibbonItem item)
+        internal void PickOrbItemImage(RibbonItem item)
         {
             if (item == null)
             {
@@ -2829,7 +2829,7 @@ namespace RibbonLib.RibbonDesign
         /// Opens the standard image editor - the same resource picker the Properties grid
         /// shows - and assigns the chosen image to the orb item.
         /// </summary>
-        private void PickOrbItemImageFromResources(RibbonItem item)
+        internal void PickOrbItemImageFromResources(RibbonItem item)
         {
             if (item == null)
             {
@@ -2985,7 +2985,7 @@ namespace RibbonLib.RibbonDesign
         /// <summary>
         /// Clears the image of an orb item inside a designer transaction.
         /// </summary>
-        private void ClearOrbItemImage(RibbonItem item)
+        internal void ClearOrbItemImage(RibbonItem item)
         {
             if (item == null)
             {
