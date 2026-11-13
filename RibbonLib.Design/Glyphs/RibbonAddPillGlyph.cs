@@ -127,10 +127,24 @@ namespace RibbonLib
         }
 
         /// <summary>
-        /// The pills are painted by the designer, so the glyph itself draws nothing.
+        /// The pills are painted by the designer. The open orb menu is painted here instead of
+        /// through OnPaintAdornments, because adornment painting is clipped to the control's
+        /// bounds and the menu is meant to hang below the ribbon like the real drop-down.
         /// </summary>
         public override void Paint(PaintEventArgs pe)
         {
+            if (pe == null || pe.Graphics == null ||
+                _designer == null || !_designer.IsOrbMenuOpen ||
+                _ribbon == null || _ribbon.IsDisposed)
+            {
+                return;
+            }
+
+            Point edge = _behaviorService == null
+                ? Point.Empty
+                : _behaviorService.ControlToAdornerWindow(_ribbon);
+
+            _designer.PaintOrbMenuAdorner(pe.Graphics, edge);
         }
 
         /// <summary>

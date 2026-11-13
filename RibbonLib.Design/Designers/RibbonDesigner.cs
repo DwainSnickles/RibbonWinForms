@@ -1257,7 +1257,6 @@ namespace RibbonLib.RibbonDesign
 
             PaintDesignerPills(pe.Graphics);
             PaintAddItemMenu(pe.Graphics);
-            PaintOrbMenu(pe.Graphics);
         }
 
         #endregion
@@ -2448,6 +2447,32 @@ namespace RibbonLib.RibbonDesign
             if (!orb.Contains(pointer) && !IsPointOnOrbMenu(pointer.X, pointer.Y))
             {
                 CloseOrbMenu();
+            }
+        }
+
+        /// <summary>
+        /// Paints the open orb menu for an adorner glyph. The glyph's graphics are in adorner
+        /// coordinates, so they are translated back to ribbon coordinates first. Painting
+        /// through the glyph matters because adornment painting is clipped to the control's
+        /// bounds, while the menu is allowed to hang below the ribbon like the real drop-down.
+        /// </summary>
+        public void PaintOrbMenuAdorner(Graphics graphics, Point adornerOffset)
+        {
+            if (graphics == null)
+            {
+                return;
+            }
+
+            var state = graphics.Save();
+
+            try
+            {
+                graphics.TranslateTransform(-adornerOffset.X, -adornerOffset.Y);
+                PaintOrbMenu(graphics);
+            }
+            finally
+            {
+                graphics.Restore(state);
             }
         }
 
