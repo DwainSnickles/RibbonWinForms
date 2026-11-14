@@ -12,6 +12,24 @@ namespace RibbonLib
     {
         internal RibbonItemCollection() : base(null) { }
 
+        /// <summary>
+        /// Gets or sets the item at the specified index.
+        /// </summary>
+        /// <remarks>
+        /// The out-of-process designer's collection editor takes the type it creates for
+        /// Add from the collection's Item property. The generic base exposes
+        /// <see cref="RibbonItem"/>, which is abstract, so Add failed with the
+        /// cannot-create-an-abstract-class error. Hiding the indexer with a concrete item
+        /// type is what lets the plain (server-created) collection editor add items: a
+        /// button is the default every ribbon item collection editor offered. Collections
+        /// that hold another item type hide it again with their own type.
+        /// </remarks>
+        public new RibbonButton this[int index]
+        {
+            get => (RibbonButton)base[index];
+            set => base[index] = value;
+        }
+
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public RibbonPanel OwnerPanel { get; private set; }
 

@@ -141,7 +141,10 @@ namespace RibbonLib
             object? designer = Current;
 
             if (designer == null)
+            {
+                RibbonDesignLog.Write($"CreateOrbItem({methodName}): no active designer");
                 return;
+            }
 
             try
             {
@@ -149,9 +152,9 @@ namespace RibbonLib
                     .GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     ?.Invoke(designer, new object[] { itemType });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // ignored: design-time only
+                RibbonDesignLog.Exception($"RibbonDesignTime.CreateOrbItem({methodName})", ex);
             }
         }
 

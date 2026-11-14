@@ -3,9 +3,35 @@
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
 
-**`dotnet add package Dwain.RibbonLib --version 1.0.2-net10`** — published on
-[nuget.org](https://www.nuget.org/packages/Dwain.RibbonLib); the DLL alone cannot go in the toolbox,
-the package is what puts it there.
+## Please read this first
+
+**Not installing from NuGet? Then you must add a reference to _both_ assemblies yourself.**
+
+| File | What it is |
+|---|---|
+| `RibbonLib.dll` | The ribbon control |
+| `RibbonLib.Design.dll` | The designer and the design-surface glyphs |
+
+`RibbonLib.Design.dll` has to sit **next to** `RibbonLib.dll` in the output folder, and both files have
+to come from the same build. Reference the control alone and the designer hosts it as a small grey
+`Ribbon` component that never draws itself - that is the most common first-time symptom.
+
+**Recommended: use the NuGet package, which brings both assemblies automatically.**
+
+```
+dotnet add package Dwain.RibbonLib --version 1.0.27-net10
+```
+
+From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`** instead. The package
+adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
+- and it is the only way to get the ribbon into the toolbox.
+
+**Versions change a lot.** `1.0.27-net10` is just the version that was current when this was written, and
+the builds are prerelease, so the version has to be given exactly. For the current one, go to
+**[github.com/DwainSnickles/RibbonWinForms](https://github.com/DwainSnickles/RibbonWinForms)** and click
+the **NuGet badge** at the top of the page, or search **`Dwain.RibbonLib`** on nuget.org
+([package page](https://www.nuget.org/packages/Dwain.RibbonLib)). Always prefer the badge or the package
+page over any version number quoted in this file.
 
 An Office-style ribbon control for Windows Forms, ported to **.NET 10** and repaired so it works
 both at runtime and inside the **out-of-process WinForms designer** that current Visual Studio uses.
@@ -17,7 +43,26 @@ Upstream targets .NET Framework 4.8; this fork moves the library to
 `net10.0-windows` (and also builds `net8.0-windows` for hosts that have not moved yet) and fixes the
 things that port broke.
 
-![The ribbon rendered by this library: orb, tabs, three panels with items, and panel footers](docs/ribbon.png)
+## What's new in 1.0.27-net10
+
+**Tabs can carry an icon.** `RibbonTab.Image` (Appearance in the Properties window) draws the icon to
+the left of the tab text. The image is scaled to fit the tab, keeping its aspect ratio, and the tab is
+measured wider by the icon and its gap, so text is never clipped.
+
+```csharp
+var files = new RibbonTab { Text = "Files", Image = Properties.Resources.Folder };
+```
+
+**The design-time orb menu is sized to its content.** It is one stacked column - menu items, the recent
+items caption and list, then the option buttons - so there is no reserved pane and no divider: the
+height is exactly the rows plus the add-button footer, and with no entries it is only that footer.
+Entries with no caption and no icon show `(menu item)`, `(recent item)` or `(option button)` instead of
+an invisible row, and an item that is in a collection more than once is listed once.
+
+**Editing an orb entry is one gesture.** Left or right click opens the same item menu (**Add Image...**,
+**Add from Resources...**, **Clear Image**, **Delete**), anchored to the clicked row and kept clear of
+the footer's add buttons. Separators, recent items and option buttons are selectable like any other
+entry, and **Delete** now really removes the entry from its collection and from `Form1.Designer.cs`.
 
 ## What this fork changes
 
@@ -32,14 +77,17 @@ out-of-process design server:
 - Three pills on the surface add structure without hunting through verbs: **Add Tab**, **Add Panel**,
   and **Add Control** (which opens a menu of Button, Combo Box, Text Box, Check Box, Up Down, Label,
   Button List, Item Group, Color Chooser, Host and Separator).
-- The item collections have real **collection editors** in the Properties grid, so panels, items, orb
-  entries, button lists and the quick access toolbar can be edited visually instead of by hand.
+- Ribbon-aware collection editing lives **on the design surface**: the pills add tabs, panels and
+  items, and the orb menu's own item menu adds entries, deletes them and sets their images. The
+  Properties grid also edits these collections, but only through Visual Studio's generic collection
+  editor - the ribbon's own editor classes never run there - so it can add and remove the collection's
+  plain item type and offers nothing ribbon-specific ([why](RibbonLib.Design/Editors/README.md)).
 - Everything written into `Form1.Designer.cs` is ordinary, readable `new RibbonTab()` / `Panels.Add(...)`
   code — no custom serialization to unpick later.
 
 **It keeps design-time code out of your app.** A deployed app must never load
-`Microsoft.DotNet.DesignTools.Server`, which only exists inside Visual Studio, so the designers,
-glyphs and collection editors live in a separate assembly, `RibbonLib.Design.dll`. `RibbonLib.dll`
+`Microsoft.DotNet.DesignTools.Server`, which only exists inside Visual Studio, so the designers and
+design-surface glyphs live in a separate assembly, `RibbonLib.Design.dll`. `RibbonLib.dll`
 itself references **no** design-tools assembly: it names its designers by *string* in attributes and
 reaches them through a plain `object` handshake (`Classes/RibbonDesignTime.cs`). The design assembly
 is copied next to your application — that is where the design server looks for it — but it is not a
@@ -106,8 +154,18 @@ Use `RibbonForm` instead of `Form` if you want the ribbon merged into a glass ca
 2. Click **Add Tab**, then **Add Panel** on the tab you just made.
 3. Click **Add Control** on a panel and pick the item type from the menu.
 4. Select any tab, panel or item to edit it in the Properties window.
-5. For collections (`Tabs`, `Panels`, `Items`, orb collections, `Buttons`, quick access items), use the
-   collection editor from the Properties window — add, remove and reorder there.
+5. The orb collections are edited on the surface: the **+** buttons in the orb menu's footer add a menu
+   item, a separator, a recent item or an option button, and clicking an entry opens its menu
+   (**Add Image...**, **Add from Resources...**, **Clear Image**, **Delete**).
+
+**The Properties grid's collection editor is Visual Studio's generic one.** The out-of-process designer
+always opens its default collection editor, so the ribbon's editor classes in
+`RibbonLib.Design/Editors` never run. What opens is a plain list of the collection's item type: it can
+add and remove those items - the collections advertise a concrete item type for exactly that reason -
+but it carries no ribbon-specific behaviour, so it has no orb or quick-access handling, no image picker
+and no separator-aware editing. Use the design surface for those;
+[`RibbonLib.Design/Editors/README.md`](RibbonLib.Design/Editors/README.md) records why those classes are
+still in the tree.
 
 ## Choosing the visible tab
 
@@ -211,11 +269,12 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.2-net10
+dotnet add package Dwain.RibbonLib --version 1.0.27-net10
 ```
 
-The package is on nuget.org, so no local feed is needed. `1.0.2-net10` is a prerelease, which is why
-the version has to be given exactly; a local build can still be packed into your own feed with
+The package is on nuget.org, so no local feed is needed. The published versions are prerelease, which is
+why the version has to be given exactly - check the NuGet badge on the repository for the current one; a
+local build can still be packed into your own feed with
 `dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
 **Doing it for a whole folder at once.** `tools\Add-RibbonToolbox.ps1` adds the package to every
@@ -268,7 +327,7 @@ powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGaller
 ```
 
 - `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
-- `-PackageVersion 1.0.2-net10` references the published package instead of the project, so the
+- `-PackageVersion 1.0.27-net10` references the published package instead of the project, so the
   sample sees the library exactly as a consumer does.
 - `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
   there rather than in the designer.
@@ -319,7 +378,7 @@ Two assemblies, so the boundary is a compile-time fact rather than a convention:
 | Piece | Role |
 |---|---|
 | `RibbonLib.Design/Designers/RibbonDesigner.cs` | The ribbon designer: selection, the Add pills, the Add Control menu, the Properties verbs |
-| `RibbonLib.Design/Editors/` | Collection editors for the item collections |
+| `RibbonLib.Design/Editors/` | Collection editor classes, kept for reference only. The designer always uses its own default editor, so these never run — see that folder's `README.md` |
 | `RibbonLib.Design/Glyphs/` | Design-surface decorations (orb, quick access toolbar, Add pills) |
 | `Classes/RibbonDesignToolsResolver.cs` | Answers design-tools assembly requests with the copy the IDE has loaded, whatever its version. It sits in the runtime assembly so it is registered before the design assembly's types are resolved; it names no design-tools type itself |
 | `Classes/RibbonDesignTime.cs` | The runtime-safe bridge, in the runtime assembly. Runtime code talks to the designer as a plain `object`, so no design-time type is ever named on a runtime path |
@@ -327,12 +386,12 @@ Two assemblies, so the boundary is a compile-time fact rather than a convention:
 The pieces talk to each other through `InternalsVisibleTo("RibbonLib.Design")`, and every designer or
 editor is referenced from an attribute as `"…, RibbonLib.Design"`.
 
-The package ships both assemblies side by side in `lib/<tfm>/`, so `RibbonLib.Design.dll` arrives as an
-ordinary reference. That is deliberate: the Visual Studio design server is only told about assemblies
-the project resolves as references. Shipping the designer under `tools/` and copying it in a build
-target puts the file in `bin\` but leaves it invisible to the designer, which then hosts the ribbon as
-a bare component that never draws itself. The runtime assembly still carries no design-tools
-reference, and nothing loads `RibbonLib.Design.dll` at run time.
+The package keeps the designer out of your compile references: `RibbonLib.Design.dll` ships under
+`lib/<tfm>/Design/WinForms/Server/`, the folder the Visual Studio design server loads server-side
+designers from, and the build copies it next to `RibbonLib.dll` in the consuming project's output. That
+is deliberate - shipping it as an ordinary reference beside the runtime assembly made applications
+compile against design-time types. The runtime assembly still carries no design-tools reference, and
+nothing loads `RibbonLib.Design.dll` at run time.
 
 ## Troubleshooting
 
@@ -390,9 +449,10 @@ del /q      "%LOCALAPPDATA%\Microsoft\VisualStudio\<instance>\ToolboxItemDiscove
 - **The pills are there but a click does nothing.** They are design-time objects on the ribbon's
   surface; a build in which the designer and the runtime assembly disagree loses the hit-testing.
   Make sure `RibbonLib.dll` and `RibbonLib.Design.dll` are the same version, then reset.
-- **The ribbon collection editor opens empty.** Same cause: the editor came from the design
-  assembly, the collections it enumerates came from the runtime assembly, and one of them is old.
-  Reset the caches and reopen the form.
+- **A design-surface edit does not stick** — an orb entry keeps coming back after **Delete**, or a new
+  pill item never appears. The design assembly writes the change into the collections, so a mismatch
+  between `RibbonLib.dll` and `RibbonLib.Design.dll` leaves the two disagreeing. Match the versions,
+  then reset the caches and reopen the form.
 - **A property you just added is not in the Properties grid.** The properties are read through the
   type metadata in `ComponentModelCache`, which was written when you first dropped the control.
 - **`Tools → Choose Toolbox Items → Browse → RibbonLib.dll` says the platform cannot be
@@ -407,13 +467,19 @@ cause.
 
 ## Known limitations
 
-- **Design-time only features.** Selection, pills, the Add Control menu and collection editors exist
+- **The Properties grid offers only Visual Studio's generic collection editor.** The out-of-process
+  designer always runs its default editor, so `RibbonLib.Design/Editors` never runs: the grid can add
+  and remove the collection's item type, but ribbon-specific editing - images, orb entries, quick access
+  - happens on the design surface ([details](#working-in-the-designer)).
+- **Design-time only features.** Selection, pills, the Add Control menu and the orb item menu exist
   only in the Visual Studio designer. Applications use the plain runtime API.
 - **Design-tools versions are independent of this package.** The package that provides the compile-time
   designer types (1.6.0) and the design server inside Visual Studio carry different assembly versions;
   the resolver in this fork bridges that. If a future Visual Studio changes the designer API, the
   designer code may need updating — the runtime will be unaffected.
-- **No NuGet package.** Build the project or reference it directly.
+- **Two assemblies to reference without the package.** A hand-made setup needs both `RibbonLib.dll`
+  and `RibbonLib.Design.dll` in the output folder, or the ribbon never draws in the designer. The NuGet
+  package supplies both, which is why it is the recommended route.
 - Binding a runtime `PropertyGrid` to a `Ribbon` can throw `ArgumentNullException` while it walks the
   ribbon's collections (observed during this port). The designer's own property grid is not affected.
 

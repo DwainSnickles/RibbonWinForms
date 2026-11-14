@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.25-net10</Version>
+	<Version>1.0.27-net10</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo;harborsiem</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo, the RibbonWinForms contributors and harborsiem (WindowsRibbon).</Copyright>
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Clicking the orb in the designer opens the orb menu on the design surface, including a blank menu with the design-time add buttons when there are no items yet - the same thing the real drop-down shows in design mode. Package metadata now credits WindowsRibbon (https://github.com/harborsiem/WindowsRibbon) and RibbonWinForms. The runtime API is unchanged from 1.0.5-net10.</PackageReleaseNotes>
+    <PackageReleaseNotes>Tab icons and a smaller, tidier orb menu. RibbonTab has an Image property: the icon is drawn to the left of the tab text, scaled to fit the tab while keeping its aspect ratio, and the tab is measured wider so the text is never clipped. The design-time orb menu is now a single stacked column sized exactly to its rows plus the add-buttons footer - no reserved empty pane, no divider, and an empty menu is only the add buttons. Orb entries with no caption and no icon show a placeholder instead of an invisible row, the same item added twice is listed once, every entry including separators opens the same context menu on left or right click, Delete really removes the entry from its collection, and the context menu opens against the clicked row without covering the footer buttons. Includes the 1.0.26 fix that lets the Properties grid's collection editor Add concrete items instead of failing on the abstract RibbonItem. Runtime behaviour is otherwise unchanged.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -70,7 +70,7 @@
          This target runs once per target framework, and the designer is built for that same
          framework: a net8 host is served by a net8 design server, so it needs a net8 designer. -->
     <MSBuild Projects="RibbonLib.Design\RibbonLib.Design.csproj" Targets="Build"
-             Properties="Configuration=$(Configuration);Version=$(Version);TargetFramework=$(TargetFramework)"
+             Properties="Configuration=$(Configuration);Version=$(Version);TargetFramework=$(TargetFramework);RibbonLibDesignBuild=true"
              Condition="'$(NoBuild)' != 'true'" />
     <ItemGroup>
       <!-- In lib/[tfm]/Design/WinForms/Server, the folder Windows Forms loads server-side designers
@@ -81,6 +81,26 @@
         <PackagePath>lib\$(TargetFramework)$(TargetPlatformVersion)\Design\WinForms\Server\</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
+  </Target>
+
+  <!-- A plain `dotnet build` must also produce the designer: the out-of-process WinForms design
+       server loads <Assembly>.Design.dll from beside the control assembly (or from the consuming
+       app's output). Without it the ribbon silently fails to materialize on the design surface.
+       Skipped during pack (AddDesignAssemblyToPackage already builds it) and during design-time
+       builds of this project itself to avoid recursion. -->
+  <Target Name="CopyDesignAssemblyToOutput" AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(RibbonLibDesignBuild)' != 'true' and '$(TargetFramework)' != ''">
+    <!-- RibbonLibDesignBuild flows through the Design project's ProjectReference back into this
+         project, so the RibbonLib build that Design depends on skips this target - no recursion. -->
+    <MSBuild Projects="RibbonLib.Design\RibbonLib.Design.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);Version=$(Version);TargetFramework=$(TargetFramework);RibbonLibDesignBuild=true" />
+    <ItemGroup>
+      <DesignDll Include="$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\$(TargetFramework)\RibbonLib.Design.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DesignDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DesignDll->'$(MSBuildProjectDirectory)\RibbonLib.Design\bin\$(Configuration)\$(TargetFramework)\RibbonLib.Design.pdb')"
+          DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"
+          Condition="Exists('%(DesignDll.FullPath).pdb')" />
   </Target>
 
 </Project>

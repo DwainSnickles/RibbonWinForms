@@ -4912,6 +4912,29 @@ namespace RibbonLib
 
             Rectangle r = Rectangle.FromLTRB(e.Tab.TabBounds.Left + e.Ribbon.TabTextMargin.Left, e.Tab.TabBounds.Top + e.Ribbon.TabTextMargin.Top, e.Tab.TabBounds.Right - e.Ribbon.TabTextMargin.Right, e.Tab.TabBounds.Bottom - e.Ribbon.TabTextMargin.Bottom);
 
+            if (e.Tab.Image != null)
+            {
+                // The icon is fitted into a square that fits the tab, keeping its aspect ratio,
+                // and the text is laid out in what is left of the tab.
+                int size = Math.Min(RibbonTab.IconSize, Math.Max(1, r.Height));
+                Rectangle iconBox = new Rectangle(
+                    r.Left + 2,
+                    r.Top + (r.Height - size) / 2,
+                    size,
+                    size);
+
+                Size fitted = FitImage(e.Tab.Image.Size, iconBox.Size);
+                Rectangle target = new Rectangle(
+                    iconBox.Left + (iconBox.Width - fitted.Width) / 2,
+                    iconBox.Top + (iconBox.Height - fitted.Height) / 2,
+                    fitted.Width,
+                    fitted.Height);
+
+                e.Graphics.DrawImage(e.Tab.Image, target);
+
+                r = Rectangle.FromLTRB(iconBox.Right + 4, r.Top, r.Right, r.Bottom);
+            }
+
             var tabText = e.Tab.Text;
 
             tabText = FormatText(tabText, e.Tab.AltKey, e.Ribbon.AltPressed);
@@ -4964,6 +4987,26 @@ namespace RibbonLib
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Scales an image size down to a box, keeping its aspect ratio. Images smaller than the
+        /// box are scaled up to it, so every tab icon ends up the same visual size.
+        /// </summary>
+        private static Size FitImage(Size source, Size box)
+        {
+            if (source.Width <= 0 || source.Height <= 0 || box.Width <= 0 || box.Height <= 0)
+            {
+                return box;
+            }
+
+            float scale = Math.Min(
+                (float)box.Width / source.Width,
+                (float)box.Height / source.Height);
+
+            return new Size(
+                Math.Max(1, (int)Math.Round(source.Width * scale)),
+                Math.Max(1, (int)Math.Round(source.Height * scale)));
         }
 
         public override void OnRenderRibbonPanelBackground(RibbonPanelRenderEventArgs e)

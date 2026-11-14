@@ -32,6 +32,7 @@ namespace RibbonLib
         private bool _selected;
         private bool _active;
         private string _text;
+        private Image _image;
         private RibbonContext _context;
         private int _offset;
         private bool _visible = true;
@@ -347,7 +348,7 @@ namespace RibbonLib
         public string AltKey { get; set; }
 
 
-        /// <summary>
+        		/// <summary>
 		/// Gets or sets the text that is to be displayed on the tab
 		/// </summary>
 		[Localizable(true)]
@@ -362,6 +363,33 @@ namespace RibbonLib
                 _text = value;
 
                 OnTextChanged(EventArgs.Empty);
+
+                if (Owner != null) Owner.OnRegionsChanged();
+            }
+        }
+
+        /// <summary>
+        /// The square an icon is fitted into on a tab, in pixels.
+        /// </summary>
+        internal const int IconSize = 16;
+
+        /// <summary>
+        /// Gets or sets the icon shown on the tab, to the left of its text. The image is scaled
+        /// down to fit the tab, keeping its aspect ratio, so the same icon can be used at any size.
+        /// </summary>
+        [Category("Appearance")]
+        [DefaultValue(null)]
+        public Image Image
+        {
+            get => _image;
+            set
+            {
+                if (ReferenceEquals(_image, value))
+                {
+                    return;
+                }
+
+                _image = value;
 
                 if (Owner != null) Owner.OnRegionsChanged();
             }
@@ -554,7 +582,16 @@ namespace RibbonLib
         {
             if (!Visible && !Owner.IsDesignMode()) return new Size(0, 0);
 
-            return Size.Ceiling(e.Graphics.MeasureString(string.IsNullOrEmpty(Text) ? " " : Text, Owner.Font));
+            Size size = Size.Ceiling(e.Graphics.MeasureString(string.IsNullOrEmpty(Text) ? " " : Text, Owner.Font));
+
+            if (_image != null)
+            {
+                // Room for the icon and the gap before the text, so the tab grows with its icon.
+                size.Width += IconSize + 4;
+                size.Height = Math.Max(size.Height, IconSize);
+            }
+
+            return size;
         }
 
         /// <summary>

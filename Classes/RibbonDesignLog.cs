@@ -12,9 +12,14 @@ namespace RibbonLib
     {
         // RIBBONLIB_DESIGN_LOG overrides the destination - test apps can point it at
         // their project folder; otherwise it falls back to %TEMP%.
+        // The design server loads a copy of this assembly from the consuming app's bin, so the
+        // repo cannot be located at runtime - the path is baked in for local diagnostics.
+        // RIBBONLIB_DESIGN_LOG still overrides it.
+        private const string RepoDir = @"E:\repos\RibbonLib";
+
         private static string LogPath =>
             Environment.GetEnvironmentVariable("RIBBONLIB_DESIGN_LOG")
-            ?? Path.Combine(Path.GetTempPath(), "RibbonLibDesign.log");
+            ?? Path.Combine(RepoDir, "RibbonLibDesign.log");
 
         internal static void Write(string message)
         {

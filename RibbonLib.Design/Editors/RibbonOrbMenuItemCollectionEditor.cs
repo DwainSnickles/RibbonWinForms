@@ -6,6 +6,12 @@ using System.ComponentModel.Design;
 
 namespace RibbonLib
 {
+    /// <remarks>
+    /// Design-time only, and not used by the out-of-process designer: its client always opens its
+    /// own default collection editor, so this class never edits a collection and the
+    /// <see cref="CreateInstance(Type)"/> override below never runs. What Add creates is decided by
+    /// the collection's Item property - see README.md in this folder.
+    /// </remarks>
     public class RibbonOrbMenuItemCollectionEditor : CollectionEditor
     {
         public RibbonOrbMenuItemCollectionEditor(IServiceProvider provider) : base(provider, typeof(RibbonOrbMenuItemCollection)) { }

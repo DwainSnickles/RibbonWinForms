@@ -10,6 +10,11 @@ namespace RibbonLib
     /// accepts <see cref="RibbonButton"/> items with the Normal style, so this editor
     /// offers that single type instead of the full ribbon item list.
     /// </summary>
+    /// <remarks>
+    /// Design-time only, and not used by the out-of-process designer: its client always opens its
+    /// own default collection editor, so this class never edits a collection. What Add creates is
+    /// decided by the collection's Item property - see README.md in this folder.
+    /// </remarks>
     public class RibbonButtonCollectionEditor : CollectionEditor
     {
         public RibbonButtonCollectionEditor(IServiceProvider serviceProvider)

@@ -229,6 +229,13 @@ namespace RibbonLib.RibbonDesign
         private RibbonItem _orbItemMenuTarget;
 
         /// <summary>
+        /// Set while an entry is selected from the design-time orb menu. Selecting a
+        /// <see cref="RibbonButton"/> normally opens its drop-down, and for an orb entry that
+        /// popup opens and closes straight away instead of helping.
+        /// </summary>
+        private bool _suppressSelectionDropDown;
+
+        /// <summary>
         /// Where the orb item context menu opened, in ribbon coordinates.
         /// </summary>
         private Point _orbItemMenuLocation;
@@ -245,7 +252,8 @@ namespace RibbonLib.RibbonDesign
         {
             "Add Image...",
             "Add from Resources...",
-            "Clear Image"
+            "Clear Image",
+            "Delete"
         };
 
         #endregion
@@ -389,7 +397,7 @@ namespace RibbonLib.RibbonDesign
                 if (GetService(typeof(ISelectionService)) is ISelectionService selector && value != null)
                     selector.SetSelectedComponents(new[] { value as Component }, SelectionTypes.Primary);
 
-                if (value is RibbonButton button)
+                if (value is RibbonButton button && !_suppressSelectionDropDown)
                 {
                     button.ShowDropDown();
                 }
@@ -430,12 +438,29 @@ namespace RibbonLib.RibbonDesign
 
         private void CreateOrbItem(string collectionName, RibbonItemCollection collection, Type t)
         {
-            if (Ribbon == null) return;
+            try
+            {
+                CreateOrbItemCore(collectionName, collection, t);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception($"RibbonDesigner.CreateOrbItem({collectionName})", ex);
+            }
+        }
+
+        private void CreateOrbItemCore(string collectionName, RibbonItemCollection collection, Type t)
+        {
+            if (Ribbon == null)
+            {
+                RibbonDesignLog.Write($"CreateOrbItemCore({collectionName}): Ribbon is null");
+                return;
+            }
 
             IDesignerHost host = GetService(typeof(IDesignerHost)) as IDesignerHost;
 
             if (host == null || Component?.Site == null)
             {
+                RibbonDesignLog.Write($"CreateOrbItemCore({collectionName}): host={host != null} site={Component?.Site != null}");
                 return;
             }
 
@@ -2043,11 +2068,14 @@ namespace RibbonLib.RibbonDesign
         {
             public readonly OrbMenuEntryKind Kind;
             public readonly RibbonItem Item;
+            /// <summary>0 = left column (menu items), 1 = right column (recents/options).</summary>
+            public readonly int Column;
 
-            public OrbMenuEntry(OrbMenuEntryKind kind, RibbonItem item = null)
+            public OrbMenuEntry(OrbMenuEntryKind kind, RibbonItem item = null, int column = 0)
             {
                 Kind = kind;
                 Item = item;
+                Column = column;
             }
         }
 
@@ -2156,37 +2184,66 @@ namespace RibbonLib.RibbonDesign
 
             RibbonOrbDropDown dropDown = Ribbon.OrbDropDown;
 
+            // One column, in drop-down order: menu items, then the recent-items caption and
+            // list, then the option buttons. The real drop-down splits these into two panes, but
+            // the design surface draws a single list - a pane reserved for the shorter side was
+            // painted as empty space whenever the two sides were not the same height.
+            bool hasRecentSection = dropDown.RecentItems.Count > 0
+                || !string.IsNullOrEmpty(dropDown.RecentItemsCaption);
+            bool hasOptions = dropDown.OptionItems.Count > 0;
+
+            // The same item can sit in a collection more than once - a repeated Add in the
+            // designer file does it - and listing it once per reference made the menu taller
+            // than the entries it actually shows. One row per distinct item, and Delete clears
+            // all of its references.
+            var seen = new HashSet<RibbonItem>();
+
             foreach (RibbonItem item in dropDown.MenuItems)
             {
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Item, item));
+                if (!seen.Add(item))
+                {
+                    continue;
+                }
+
+                // Separators keep their item so they can be selected and deleted like any
+                // other entry - they used to carry null, which made them unclickable blank rows.
+                entries.Add(item is RibbonSeparator
+                    ? new OrbMenuEntry(OrbMenuEntryKind.Separator, item)
+                    : new OrbMenuEntry(OrbMenuEntryKind.Item, item));
             }
 
-            if (dropDown.RecentItems.Count > 0)
+            if (hasRecentSection)
             {
-                if (entries.Count > 0)
-                {
-                    entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator));
-                }
-
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.RecentHeader));
-
-                foreach (RibbonItem item in dropDown.RecentItems)
-                {
-                    entries.Add(new OrbMenuEntry(OrbMenuEntryKind.RecentItem, item));
-                }
+                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.RecentHeader, null));
             }
 
-            if (dropDown.OptionItems.Count > 0)
+            foreach (RibbonItem item in dropDown.RecentItems)
             {
-                if (entries.Count > 0)
+                if (!seen.Add(item))
                 {
-                    entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator));
+                    continue;
                 }
 
-                foreach (RibbonItem item in dropDown.OptionItems)
+                entries.Add(new OrbMenuEntry(
+                    item is RibbonSeparator ? OrbMenuEntryKind.Separator : OrbMenuEntryKind.RecentItem,
+                    item));
+            }
+
+            if (hasRecentSection && hasOptions)
+            {
+                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator, null));
+            }
+
+            foreach (RibbonItem item in dropDown.OptionItems)
+            {
+                if (!seen.Add(item))
                 {
-                    entries.Add(new OrbMenuEntry(OrbMenuEntryKind.OptionItem, item));
+                    continue;
                 }
+
+                entries.Add(new OrbMenuEntry(
+                    item is RibbonSeparator ? OrbMenuEntryKind.Separator : OrbMenuEntryKind.OptionItem,
+                    item));
             }
 
             return entries;
@@ -2218,9 +2275,11 @@ namespace RibbonLib.RibbonDesign
             switch (entry.Kind)
             {
                 case OrbMenuEntryKind.Item:
+                    return GetOrbEntryCaption(entry, "(menu item)");
                 case OrbMenuEntryKind.RecentItem:
+                    return GetOrbEntryCaption(entry, "(recent item)");
                 case OrbMenuEntryKind.OptionItem:
-                    return entry.Item?.Text;
+                    return GetOrbEntryCaption(entry, "(option button)");
                 case OrbMenuEntryKind.RecentHeader:
                     return string.IsNullOrEmpty(ribbon.OrbDropDown.RecentItemsCaption)
                         ? "Recent Items"
@@ -2228,6 +2287,27 @@ namespace RibbonLib.RibbonDesign
                 default:
                     return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// Gets an entry's caption, or a placeholder when it has neither text nor an image. Such
+        /// an entry used to paint as a blank row - unexplainable empty space in the menu, and
+        /// nothing to aim at in order to select or delete it.
+        /// </summary>
+        private static string GetOrbEntryCaption(OrbMenuEntry entry, string placeholder)
+        {
+            string text = entry.Item?.Text;
+
+            if (!string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            Image image = entry.Item is RibbonButton button
+                ? (button.Image ?? button.SmallImage)
+                : entry.Item?.Image;
+
+            return image == null ? placeholder : string.Empty;
         }
 
         /// <summary>
@@ -2244,63 +2324,39 @@ namespace RibbonLib.RibbonDesign
 
             List<OrbMenuEntry> entries = GetOrbMenuEntries();
 
-            int width;
-            int height = OrbMenuPad * 2;
-
-            if (entries.Count == 0)
+            if (entries.Count == 0 && !_orbMenuOpen)
             {
-                // With no items the real drop-down still shows its frame and the
-                // design-time add buttons, so the design surface does the same.
-                if (!_orbMenuOpen)
-                {
-                    return Rectangle.Empty;
-                }
-
-                // Size the frame to the widest button caption so the labels are not
-                // truncated. GetOrbMenuGlyphButtonBounds uses a 6px gap and halves
-                // the remaining width between the two columns.
-                Font buttonFont = Ribbon.Font ?? SystemFonts.DefaultFont;
-                int captionWidth = 0;
-
-                foreach (string caption in OrbMenuGlyphButtonCaptions)
-                {
-                    captionWidth = Math.Max(
-                        captionWidth,
-                        TextRenderer.MeasureText(caption, buttonFont).Width);
-                }
-
-                width = OrbMenuPad * 2 + 6 + (captionWidth + 20) * 2;
-                height += OrbMenuButtonRowHeight * 2 + 6;
+                return Rectangle.Empty;
             }
-            else
+
+            // The four design-time add buttons always occupy a footer strip at the bottom
+            // of the menu (the whole menu when it is empty), like the real drop-down's "+"
+            // glyphs - so new items can be added at any time, not just to a blank menu.
+            Font buttonFont = Ribbon.Font ?? SystemFonts.DefaultFont;
+            int captionWidth = 0;
+
+            foreach (string caption in OrbMenuGlyphButtonCaptions)
             {
-                Font measureFont = Ribbon.Font ?? SystemFonts.DefaultFont;
-                width = 0;
-
-                foreach (OrbMenuEntry entry in entries)
-                {
-                    height += OrbMenuEntryHeight(entry);
-
-                    if (entry.Kind == OrbMenuEntryKind.Separator)
-                    {
-                        continue;
-                    }
-
-                    string text = GetOrbMenuEntryText(entry, Ribbon) ?? string.Empty;
-                    int textWidth = TextRenderer.MeasureText(text, measureFont).Width;
-
-                    if (entry.Kind == OrbMenuEntryKind.Item ||
-                        entry.Kind == OrbMenuEntryKind.RecentItem ||
-                        entry.Kind == OrbMenuEntryKind.OptionItem)
-                    {
-                        textWidth += OrbMenuIconWidth;
-                    }
-
-                    width = Math.Max(width, textWidth + OrbMenuPad * 2 + 8);
-                }
-
-                width = Math.Max(150, width);
+                captionWidth = Math.Max(
+                    captionWidth,
+                    TextRenderer.MeasureText(caption, buttonFont).Width);
             }
+
+            int buttonsWidth = OrbMenuPad * 2 + 6 + (captionWidth + 12) * 2;
+
+            OrbMenuMetrics metrics = MeasureOrbMenuColumns(entries);
+            const int columnGap = 10;
+
+            int contentWidth = (metrics.HasLeft ? metrics.LeftWidth : 0)
+                + (metrics.HasLeft && metrics.HasRight ? columnGap : 0)
+                + (metrics.HasRight ? metrics.RightWidth : 0);
+
+            int width = Math.Max(OrbMenuPad * 2 + contentWidth, buttonsWidth);
+            int height = OrbMenuPad * 2 + OrbMenuButtonRowHeight * 2 + 6
+                + Math.Max(metrics.LeftHeight, metrics.RightHeight);
+
+            // Fill the width the footer forced, so the columns do not leave a blank strip.
+            FitOrbMenuColumns(metrics, width - OrbMenuPad * 2);
 
             int x = Ribbon.OrbBounds.Left;
             int y = Ribbon.OrbBounds.Bottom + 2;
@@ -2311,6 +2367,94 @@ namespace RibbonLib.RibbonDesign
             }
 
             return new Rectangle(x, y, width, height);
+        }
+
+        /// <summary>Per-column measurements for the two-column orb menu layout.</summary>
+        private sealed class OrbMenuMetrics
+        {
+            public bool HasLeft, HasRight;
+            public int LeftWidth, RightWidth, LeftHeight, RightHeight;
+        }
+
+        private OrbMenuMetrics MeasureOrbMenuColumns(List<OrbMenuEntry> entries)
+        {
+            var m = new OrbMenuMetrics();
+            Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
+
+            foreach (OrbMenuEntry entry in entries)
+            {
+                bool right = entry.Column == 1;
+                if (right) m.HasRight = true; else m.HasLeft = true;
+
+                int h = OrbMenuEntryHeight(entry);
+                if (right) m.RightHeight += h; else m.LeftHeight += h;
+
+                if (entry.Kind == OrbMenuEntryKind.Separator)
+                {
+                    continue;
+                }
+
+                string text = GetOrbMenuEntryText(entry, Ribbon) ?? string.Empty;
+                int w = TextRenderer.MeasureText(text, font).Width + OrbMenuPad * 2 + 8;
+
+                if (entry.Kind == OrbMenuEntryKind.Item ||
+                    entry.Kind == OrbMenuEntryKind.RecentItem ||
+                    entry.Kind == OrbMenuEntryKind.OptionItem)
+                {
+                    w += OrbMenuIconWidth;
+                }
+
+                if (right) m.RightWidth = Math.Max(m.RightWidth, w);
+                else m.LeftWidth = Math.Max(m.LeftWidth, w);
+            }
+
+            // Columns are exactly as wide as their content. Any width the menu needs beyond that
+            // comes from the add-button footer, and FitOrbMenuColumns spreads it over the columns
+            // - so a short entry never sits beside a blank strip.
+            return m;
+        }
+
+        /// <summary>
+        /// Spreads the menu's spare width over its columns so together they fill the content area.
+        /// The menu is never narrower than its add-button footer, and without this the leftover
+        /// width painted as empty space beside short entries.
+        /// </summary>
+        private static void FitOrbMenuColumns(OrbMenuMetrics metrics, int contentWidth)
+        {
+            if (metrics == null || contentWidth <= 0)
+            {
+                return;
+            }
+
+            if (!metrics.HasLeft && !metrics.HasRight)
+            {
+                return;
+            }
+
+            const int columnGap = 10;
+
+            if (metrics.HasLeft && metrics.HasRight)
+            {
+                int used = metrics.LeftWidth + columnGap + metrics.RightWidth;
+                int slack = contentWidth - used;
+
+                if (slack > 0)
+                {
+                    metrics.LeftWidth += slack / 2;
+                    metrics.RightWidth += slack - slack / 2;
+                }
+
+                return;
+            }
+
+            if (metrics.HasLeft)
+            {
+                metrics.LeftWidth = Math.Max(metrics.LeftWidth, contentWidth);
+            }
+            else
+            {
+                metrics.RightWidth = Math.Max(metrics.RightWidth, contentWidth);
+            }
         }
 
         /// <summary>
@@ -2332,40 +2476,78 @@ namespace RibbonLib.RibbonDesign
                 return Rectangle.Empty;
             }
 
+            OrbMenuEntry entry = entries[entryIndex];
+
+            // A separator is as clickable as any other row: it is the blank row that has to be
+            // selected before the context menu can delete it, so the hit area is the whole row
+            // rather than the hairline it is painted with.
+            int height = OrbMenuEntryHeight(entry);
+
+            // The design menu is a single stacked column, so every row uses the menu's width.
+            OrbMenuMetrics metrics = MeasureOrbMenuColumns(entries);
+            FitOrbMenuColumns(metrics, menu.Width - OrbMenuPad * 2);
+            const int columnGap = 10;
+
+            int columnX = menu.Left + OrbMenuPad;
+            int columnWidth = metrics.LeftWidth;
+
+            if (entry.Column == 1)
+            {
+                columnX += metrics.LeftWidth + (metrics.HasLeft ? columnGap : 0);
+                columnWidth = metrics.RightWidth;
+            }
+
             int y = menu.Top + OrbMenuPad;
 
             for (int i = 0; i < entryIndex; i++)
             {
-                y += OrbMenuEntryHeight(entries[i]);
+                if (entries[i].Column == entry.Column)
+                {
+                    y += OrbMenuEntryHeight(entries[i]);
+                }
             }
 
-            OrbMenuEntry entry = entries[entryIndex];
-            int height = OrbMenuEntryHeight(entry);
-
-            if (entry.Kind == OrbMenuEntryKind.Separator)
-            {
-                return new Rectangle(menu.Left + OrbMenuPad, y + 3, menu.Width - OrbMenuPad * 2, 1);
-            }
-
-            return new Rectangle(menu.Left + OrbMenuPad, y, menu.Width - OrbMenuPad * 2, height);
+            return new Rectangle(columnX, y, columnWidth, height);
         }
 
         /// <summary>
-        /// Gets the bounds of one of the four design-time add buttons shown on the blank
-        /// orb menu, in ribbon coordinates, laid out in a two-by-two grid. Index 0 adds a
-        /// menu item, 1 a separator, 2 a recent item and 3 an option item.
+        /// Gets the rectangle the four design-time add buttons occupy: a footer strip at the
+        /// bottom of the menu, or the whole menu when it has no entries yet.
         /// </summary>
-        private static Rectangle GetOrbMenuGlyphButtonBounds(Rectangle menu, int index)
+        private Rectangle GetOrbMenuButtonsArea(Rectangle menu, int entryCount)
+        {
+            const int footerHeight = OrbMenuButtonRowHeight * 2 + 6;
+
+            if (entryCount == 0)
+            {
+                return new Rectangle(
+                    menu.Left + OrbMenuPad, menu.Top + OrbMenuPad,
+                    menu.Width - OrbMenuPad * 2, menu.Height - OrbMenuPad * 2);
+            }
+
+            return new Rectangle(
+                menu.Left + OrbMenuPad,
+                menu.Bottom - OrbMenuPad - footerHeight,
+                menu.Width - OrbMenuPad * 2,
+                footerHeight);
+        }
+
+        /// <summary>
+        /// Gets the bounds of one of the four design-time add buttons, in ribbon coordinates.
+        /// Buttons 0-1 sit under the left (menu items) column - new menu item, new separator -
+        /// and buttons 2-3 under the right column - new recent item, new option item.
+        /// </summary>
+        private static Rectangle GetOrbMenuGlyphButtonBounds(Rectangle area, int index)
         {
             const int gap = 6;
-            int cellWidth = (menu.Width - OrbMenuPad * 2 - gap) / 2;
-            int column = index % 2;
-            int row = index / 2;
+            int halfWidth = area.Width / 2;
+            int column = index < 2 ? 0 : 1;
+            int row = index % 2;
 
-            int x = menu.Left + OrbMenuPad + column * (cellWidth + gap);
-            int y = menu.Top + OrbMenuPad + row * (OrbMenuButtonRowHeight + gap);
+            int x = area.Left + column * halfWidth;
+            int y = area.Top + row * (OrbMenuButtonRowHeight + gap);
 
-            return new Rectangle(x, y, cellWidth, OrbMenuButtonRowHeight);
+            return new Rectangle(x, y, halfWidth, OrbMenuButtonRowHeight);
         }
 
         /// <summary>
@@ -2421,12 +2603,14 @@ namespace RibbonLib.RibbonDesign
 
         /// <summary>
         /// Handles a click on the open orb menu: selects the entry under the mouse, or adds a
-        /// new orb item for the "+" glyphs. A right click on an entry selects it and opens the
-        /// design-time context menu. Returns <c>false</c> when the point is not on the
-        /// menu so the caller can keep its normal click handling.
+        /// new orb item for the "+" glyphs. Either button on an entry selects it and opens the
+        /// same design-time context menu, anchored to the entry's row. Returns <c>false</c>
+        /// when the point is not on the menu so the caller can keep its normal click handling.
         /// </summary>
         public bool HandleOrbMenuClick(int x, int y, bool rightButton = false)
         {
+            RibbonDesignLog.Write($"HandleOrbMenuClick x={x} y={y} right={rightButton} open={_orbMenuOpen}");
+
             // The item context menu opens inside the orb menu's bounds, so it has to be
             // checked first or its rows would select whatever entry sits underneath.
             if (IsPointOnOrbItemMenu(x, y))
@@ -2440,24 +2624,21 @@ namespace RibbonLib.RibbonDesign
             }
 
             List<OrbMenuEntry> entries = GetOrbMenuEntries();
+            Rectangle menu = GetOrbMenuBounds();
+            Rectangle buttonsArea = GetOrbMenuButtonsArea(menu, entries.Count);
 
-            // The blank menu's add buttons create the matching kind of orb entry,
-            // like the glyphs on the real drop-down do in design mode.
-            if (entries.Count == 0)
+            // The add buttons live in the footer strip (the whole menu when empty), so new
+            // orb entries can be created at any time - not just on a blank menu.
+            if (!rightButton)
             {
-                if (rightButton)
-                {
-                    return true;
-                }
-
-                Rectangle menu = GetOrbMenuBounds();
-
                 for (int i = 0; i < 4; i++)
                 {
-                    if (!GetOrbMenuGlyphButtonBounds(menu, i).Contains(x, y))
+                    if (!GetOrbMenuGlyphButtonBounds(buttonsArea, i).Contains(x, y))
                     {
                         continue;
                     }
+
+                    RibbonDesignLog.Write($"OrbMenu glyph {i} clicked");
 
                     switch (i)
                     {
@@ -2474,8 +2655,13 @@ namespace RibbonLib.RibbonDesign
                             CreateOrbOptionItem(typeof(RibbonOrbOptionButton));
                             break;
                     }
-                }
 
+                    return true;
+                }
+            }
+
+            if (entries.Count == 0)
+            {
                 return true;
             }
 
@@ -2489,27 +2675,27 @@ namespace RibbonLib.RibbonDesign
             OrbMenuEntry entry = entries[index];
             RibbonOrbDropDown dropDown = Ribbon.OrbDropDown;
 
-            switch (entry.Kind)
+            // Every entry, separators included, selects its item and opens the same menu on
+            // both buttons, so editing an entry no longer depends on knowing about right-click.
+            RibbonItem hitItem = GetOrbMenuItem(entry);
+
+            if (hitItem == null)
             {
-                case OrbMenuEntryKind.Item:
-                case OrbMenuEntryKind.RecentItem:
-                case OrbMenuEntryKind.OptionItem:
-                {
-                    RibbonItem item = GetOrbMenuItem(entry);
-
-                    if (item != null)
-                    {
-                        dropDown.SelectOnDesigner(item);
-
-                        if (rightButton)
-                        {
-                            OpenOrbItemMenu(item, x, y);
-                        }
-                    }
-
-                    break;
-                }
+                return true;
             }
+
+            _suppressSelectionDropDown = true;
+
+            try
+            {
+                dropDown.SelectOnDesigner(hitItem);
+            }
+            finally
+            {
+                _suppressSelectionDropDown = false;
+            }
+
+            OpenOrbItemMenu(hitItem, GetOrbMenuEntryBounds(index));
 
             return true;
         }
@@ -2522,9 +2708,9 @@ namespace RibbonLib.RibbonDesign
         public bool IsOrbItemMenuOpen => _orbItemMenuTarget != null;
 
         /// <summary>
-        /// Opens the context menu for an orb menu item at a point in ribbon coordinates.
+        /// Opens the context menu for an orb menu entry, anchored to the row it belongs to.
         /// </summary>
-        public void OpenOrbItemMenu(RibbonItem item, int x, int y)
+        public void OpenOrbItemMenu(RibbonItem item, Rectangle row)
         {
             if (item == null || Ribbon == null || Ribbon.IsDisposed)
             {
@@ -2532,11 +2718,47 @@ namespace RibbonLib.RibbonDesign
             }
 
             _orbItemMenuTarget = item;
-            _orbItemMenuLocation = new Point(x, y);
             _orbItemMenuHover = -1;
+            _orbItemMenuLocation = GetOrbItemMenuAnchor(item, row);
 
             Ribbon?.Invalidate();
             _pillsAdorner?.Invalidate();
+        }
+
+        /// <summary>
+        /// Works out where the orb item context menu opens: below the clicked row when it fits,
+        /// otherwise above the row, otherwise below the whole orb menu. Anchoring to the row
+        /// instead of the pointer keeps the menu next to the entry it acts on, and no placement
+        /// is allowed to cover the add-entry footer strip at the bottom of the orb menu - that
+        /// footer has to stay clickable while a context menu is open.
+        /// </summary>
+        private Point GetOrbItemMenuAnchor(RibbonItem item, Rectangle row)
+        {
+            if (row.IsEmpty)
+            {
+                return _orbItemMenuLocation;
+            }
+
+            int height = GetOrbItemMenuCaptions(item).Length * OrbItemMenuRowHeight + 8;
+            int x = row.Left + 6;
+
+            Rectangle menu = GetOrbMenuBounds();
+            int footerTop = menu.IsEmpty
+                ? (Ribbon == null || Ribbon.IsDisposed ? 1 : Ribbon.Height - 1)
+                : GetOrbMenuButtonsArea(menu, GetOrbMenuEntries().Count).Top;
+
+            // Two pixels of clearance so the menu does not sit flush against the footer.
+            int limit = Math.Max(1, footerTop - 2);
+
+            if (row.Bottom + 2 + height <= limit)
+            {
+                return new Point(x, row.Bottom + 2);
+            }
+
+            // Opening above the row is always clear of the footer - the row itself is above it -
+            // so the only thing to clamp is the top of the ribbon. Near the top the menu simply
+            // extends over the ribbon above the orb menu, which is harmless for a popup.
+            return new Point(x, Math.Max(1, row.Top - height - 2));
         }
 
         /// <summary>
@@ -2557,9 +2779,9 @@ namespace RibbonLib.RibbonDesign
         }
 
         /// <summary>
-        /// Works out the bounds of the orb item context menu in ribbon coordinates. It opens
-        /// at the click point and is kept inside the ribbon's width, but may hang below the
-        /// bottom edge like the orb menu itself.
+        /// Works out the bounds of the orb item context menu in ribbon coordinates. It opens at
+        /// the anchor chosen by <see cref="GetOrbItemMenuAnchor"/> and is kept inside the ribbon's
+        /// width, but may hang below the bottom edge like the orb menu itself.
         /// </summary>
         public Rectangle GetOrbItemMenuBounds()
         {
@@ -2568,10 +2790,19 @@ namespace RibbonLib.RibbonDesign
                 return Rectangle.Empty;
             }
 
+            // The target can disappear while the menu is open - deleted, undone, or removed by
+            // the collection editor - and a menu for an item that is gone would keep drawing.
+            if (!Ribbon.OrbDropDown.AllItems.Contains(_orbItemMenuTarget))
+            {
+                CloseOrbItemMenu();
+                return Rectangle.Empty;
+            }
+
+            string[] captions = GetOrbItemMenuCaptions(_orbItemMenuTarget);
             Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
             int width = 0;
 
-            foreach (string caption in OrbItemMenuCaptions)
+            foreach (string caption in captions)
             {
                 width = Math.Max(
                     width,
@@ -2579,7 +2810,7 @@ namespace RibbonLib.RibbonDesign
             }
 
             width += 20;
-            int height = OrbItemMenuCaptions.Length * OrbItemMenuRowHeight + 8;
+            int height = captions.Length * OrbItemMenuRowHeight + 8;
 
             int x = _orbItemMenuLocation.X;
             int y = _orbItemMenuLocation.Y;
@@ -2598,13 +2829,25 @@ namespace RibbonLib.RibbonDesign
         private const int OrbItemMenuRowHeight = 20;
 
         /// <summary>
+        /// Gets the rows of the context menu for the item it was opened on: a separator only
+        /// needs Delete, everything else also gets the image commands.
+        /// </summary>
+        private static string[] GetOrbItemMenuCaptions(RibbonItem item)
+        {
+            return item is RibbonSeparator
+                ? new[] { "Delete" }
+                : OrbItemMenuCaptions;
+        }
+
+        /// <summary>
         /// Gets the bounds of one context menu row, in ribbon coordinates.
         /// </summary>
         private Rectangle GetOrbItemMenuRowBounds(int index)
         {
             Rectangle menu = GetOrbItemMenuBounds();
 
-            if (menu.IsEmpty || index < 0 || index >= OrbItemMenuCaptions.Length)
+            if (menu.IsEmpty || index < 0 ||
+                index >= GetOrbItemMenuCaptions(_orbItemMenuTarget).Length)
             {
                 return Rectangle.Empty;
             }
@@ -2626,7 +2869,7 @@ namespace RibbonLib.RibbonDesign
                 return -1;
             }
 
-            for (int i = 0; i < OrbItemMenuCaptions.Length; i++)
+            for (int i = 0; i < GetOrbItemMenuCaptions(_orbItemMenuTarget).Length; i++)
             {
                 if (GetOrbItemMenuRowBounds(i).Contains(x, y))
                 {
@@ -2683,12 +2926,18 @@ namespace RibbonLib.RibbonDesign
 
             int row = GetOrbItemMenuRowIndex(x, y);
             RibbonItem target = _orbItemMenuTarget;
+            bool imageRows = !(target is RibbonSeparator);
 
             CloseOrbItemMenu();
 
             if (row >= 0 && target != null)
             {
-                if (row == 0)
+                if (!imageRows)
+                {
+                    // A separator has no image, so its single row is Delete.
+                    DeleteOrbItem(target);
+                }
+                else if (row == 0)
                 {
                     PickOrbItemImage(target);
                 }
@@ -2696,13 +2945,55 @@ namespace RibbonLib.RibbonDesign
                 {
                     PickOrbItemImageFromResources(target);
                 }
-                else
+                else if (row == 2)
                 {
                     ClearOrbItemImage(target);
+                }
+                else
+                {
+                    DeleteOrbItem(target);
                 }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Removes an orb menu entry through the designer host so the deletion is
+        /// serialized into the form's code like any other designer edit.
+        /// </summary>
+        private void DeleteOrbItem(RibbonItem item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            IDesignerHost host = GetService(typeof(IDesignerHost)) as IDesignerHost;
+
+            if (host == null)
+            {
+                Ribbon.OrbDropDown.HandleDesignerItemRemoved(item);
+                Ribbon.OrbDropDown.OnRegionsChanged();
+                return;
+            }
+
+            // DestroyComponent raises the ComponentRemoved event, which the designer's
+            // changeService_ComponentRemoved handler uses to drop the item from its
+            // collection - so the removal is serialized like any other designer edit.
+            DesignerTransaction transaction =
+                host.CreateTransaction("DeleteRibbonOrbItem_" + (Component?.Site?.Name ?? "item"));
+            host.DestroyComponent(item);
+            transaction.Commit();
+
+            // Safety net: if the removal event did not fire, the destroyed item would be left
+            // in the collection and the design surface would keep drawing it.
+            if (Ribbon != null && Ribbon.OrbDropDown.AllItems.Contains(item))
+            {
+                Ribbon.OrbDropDown.HandleDesignerItemRemoved(item);
+            }
+
+            CloseOrbMenu();
         }
 
         /// <summary>
@@ -3072,7 +3363,9 @@ namespace RibbonLib.RibbonDesign
                     FormatFlags = StringFormatFlags.NoWrap
                 })
                 {
-                    for (int i = 0; i < OrbItemMenuCaptions.Length; i++)
+                    string[] captions = GetOrbItemMenuCaptions(_orbItemMenuTarget);
+
+                    for (int i = 0; i < captions.Length; i++)
                     {
                         Rectangle row = GetOrbItemMenuRowBounds(i);
 
@@ -3092,7 +3385,7 @@ namespace RibbonLib.RibbonDesign
                         }
 
                         graphics.DrawString(
-                            OrbItemMenuCaptions[i],
+                            captions[i],
                             font,
                             hovered ? Brushes.White : Brushes.Black,
                             new Rectangle(row.Left + 6, row.Top, row.Width - 12, row.Height),
@@ -3204,28 +3497,27 @@ namespace RibbonLib.RibbonDesign
 
                 Font font = Ribbon.Font ?? SystemFonts.DefaultFont;
                 List<OrbMenuEntry> entries = GetOrbMenuEntries();
+                Rectangle buttonsArea = GetOrbMenuButtonsArea(bounds, entries.Count);
 
-                // The blank menu shows design-time add buttons, so entries can be
-                // created straight from it.
-                if (entries.Count == 0)
+                // The design-time add buttons are always shown: they fill the menu when it
+                // is empty and sit in a footer strip below the entries otherwise.
+                using (StringFormat buttonFormat = StringFormatFactory.Center(StringTrimming.None))
+                using (SolidBrush buttonBrush = new SolidBrush(Color.FromArgb(50, Color.Blue)))
                 {
-                    using (StringFormat buttonFormat = StringFormatFactory.Center(StringTrimming.None))
-                    using (SolidBrush buttonBrush = new SolidBrush(Color.FromArgb(50, Color.Blue)))
+                    for (int i = 0; i < 4; i++)
                     {
-                        for (int i = 0; i < 4; i++)
-                        {
-                            Rectangle button = GetOrbMenuGlyphButtonBounds(bounds, i);
-                            graphics.FillRectangle(buttonBrush, button);
-                            graphics.DrawString(
-                                OrbMenuGlyphButtonCaptions[i],
-                                font,
-                                Brushes.White,
-                                button,
-                                buttonFormat);
-                        }
+                        Rectangle button = GetOrbMenuGlyphButtonBounds(buttonsArea, i);
+                        graphics.FillRectangle(buttonBrush, button);
+                        graphics.DrawString(
+                            OrbMenuGlyphButtonCaptions[i],
+                            font,
+                            Brushes.White,
+                            button,
+                            buttonFormat);
                     }
                 }
-                else
+
+                if (entries.Count > 0)
                 {
                     using (StringFormat format = new StringFormat
                     {
@@ -3239,7 +3531,7 @@ namespace RibbonLib.RibbonDesign
                             Rectangle row = GetOrbMenuEntryBounds(i);
                             OrbMenuEntry entry = entries[i];
 
-                            if (row.IsEmpty || entry.Kind == OrbMenuEntryKind.Separator)
+                            if (row.IsEmpty)
                             {
                                 continue;
                             }
@@ -3252,6 +3544,21 @@ namespace RibbonLib.RibbonDesign
                                 {
                                     graphics.FillRectangle(highlight, row);
                                 }
+                            }
+
+                            if (entry.Kind == OrbMenuEntryKind.Separator)
+                            {
+                                // Separators used to paint nothing at all, so they read as blank
+                                // space nobody could select. The row highlights on hover now,
+                                // because selecting it is the first step to deleting it.
+                                using (Pen separator = new Pen(Color.FromArgb(190, 190, 190)))
+                                {
+                                    int lineY = row.Top + row.Height / 2;
+                                    graphics.DrawLine(
+                                        separator, row.Left + 4, lineY, row.Right - 4, lineY);
+                                }
+
+                                continue;
                             }
 
                             if (entry.Kind == OrbMenuEntryKind.RecentHeader)
@@ -3305,6 +3612,24 @@ namespace RibbonLib.RibbonDesign
                                 hovered ? Brushes.White : Brushes.Black,
                                 textBounds,
                                 format);
+                        }
+                    }
+
+                    // Split-panel look: a vertical rule between the menu-items column
+                    // and the recents/options column, like the real drop-down.
+                    OrbMenuMetrics metrics = MeasureOrbMenuColumns(entries);
+                    FitOrbMenuColumns(metrics, bounds.Width - OrbMenuPad * 2);
+
+                    if (metrics.HasLeft && metrics.HasRight)
+                    {
+                        const int columnGap = 10;
+                        int dividerX = bounds.Left + OrbMenuPad + metrics.LeftWidth + columnGap / 2;
+                        using (Pen divider = new Pen(Color.FromArgb(220, 220, 220)))
+                        {
+                            graphics.DrawLine(
+                                divider,
+                                dividerX, bounds.Top + OrbMenuPad,
+                                dividerX, bounds.Bottom - OrbMenuPad - (OrbMenuButtonRowHeight * 2 + 6));
                         }
                     }
                 }
@@ -3380,7 +3705,13 @@ namespace RibbonLib.RibbonDesign
             }
             else if (item != null)
             {
-                if (item.Canvas is RibbonOrbDropDown)
+                // Orb items are only given the drop-down as their canvas once it has a window
+                // handle, which never happens at design time - so members are matched against
+                // the orb collections instead of Canvas. Without this a deleted orb entry (a
+                // separator included) stayed in the collection and kept coming back.
+                if (Ribbon != null &&
+                    (item.Canvas is RibbonOrbDropDown ||
+                     Ribbon.OrbDropDown.AllItems.Contains(item)))
                 {
                     Ribbon.OrbDropDown.HandleDesignerItemRemoved(item);
                 }

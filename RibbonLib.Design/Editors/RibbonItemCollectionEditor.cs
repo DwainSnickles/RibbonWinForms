@@ -16,6 +16,12 @@ using System.ComponentModel.Design;
 
 namespace RibbonLib
 {
+    /// <remarks>
+    /// Design-time only, and not used by the out-of-process designer: its client always opens its
+    /// own default collection editor, so this class never edits a collection and the
+    /// <see cref="CreateInstance(Type)"/> override below never runs. What Add creates is decided by
+    /// the collection's Item property - see README.md in this folder.
+    /// </remarks>
     public class RibbonItemCollectionEditor
         : CollectionEditor
     {
@@ -66,16 +72,10 @@ namespace RibbonLib
     /// Design-time editor for <see cref="RibbonPanel.Items"/>.
     /// </summary>
     /// <remarks>
-    /// A panel rejects <see cref="RibbonDescriptionMenuItem"/> (see
-    /// <c>RibbonItemCollection.CheckRestrictions</c>), so offering it here made Add throw
-    /// "The RibbonDescriptionMenuItem item is not supported on a panel". Drop-down collections
-    /// keep using <see cref="RibbonItemCollectionEditor"/>, which still offers it.
-    /// <para>
-    /// This derives from <see cref="CollectionEditor"/> directly rather than from
-    /// <see cref="RibbonItemCollectionEditor"/>. The tooling used the base editor for
-    /// <c>panel.Items</c> when it was an indirect descendant, which left Add with no item types
-    /// and produced "cannot create an instance of RibbonItem because it is an abstract class".
-    /// </para>
+    /// Design-time only, and not used by the out-of-process designer: its client always opens its
+    /// own default collection editor, so this class never edits a collection and the
+    /// <see cref="CreateInstance(Type)"/> override below never runs. What Add creates is decided by
+    /// the collection's Item property - see README.md in this folder.
     /// </remarks>
     public class RibbonPanelItemCollectionEditor : CollectionEditor
     {
