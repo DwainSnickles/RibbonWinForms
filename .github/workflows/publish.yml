@@ -76,8 +76,16 @@ jobs:
           echo "pkgid=$pkgid" >> "$GITHUB_OUTPUT"
           echo "Packing $pkgid $version"
 
-      # Both halves are built here: the runtime library, then the design assembly that the package
-      # ships in lib/ next to it, one per target framework. `pack --no-build` then only packs.
+      # Both projects need their assets file first: RibbonLib.csproj copies the design assembly
+      # into its output by building that project from an MSBuild task, which does not restore it,
+      # so a build without this step fails with NETSDK1004 (missing project.assets.json).
+      - name: Restore
+        run: |
+          dotnet restore RibbonLib.csproj
+          dotnet restore RibbonLib.Design/RibbonLib.Design.csproj
+
+      # Both halves are built here: the runtime library, then the design assembly the package
+      # ships under lib/<tfm>/Design/WinForms/Server, one per target framework. Then pack only packs.
       - name: Build
         shell: bash
         run: |
