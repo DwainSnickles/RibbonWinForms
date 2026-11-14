@@ -43,6 +43,9 @@ Upstream targets .NET Framework 4.8; this fork moves the library to
 `net10.0-windows` (and also builds `net8.0-windows` for hosts that have not moved yet) and fixes the
 things that port broke.
 
+![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
+access toolbar](docs/ribbon.png)
+
 ## What's new in 1.0.27-net10
 
 **Tabs can carry an icon.** `RibbonTab.Image` (Appearance in the Properties window) draws the icon to
