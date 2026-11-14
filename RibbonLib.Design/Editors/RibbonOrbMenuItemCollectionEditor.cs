@@ -45,8 +45,6 @@ namespace RibbonLib
 
         private object CreateInstanceCore(Type itemType)
         {
-            RibbonDesignLog.Write($"CreateInstance asked for {itemType?.FullName ?? "null"}");
-
             if (itemType == typeof(RibbonOrbMenuItem))
             {
                 return new RibbonOrbMenuItem();

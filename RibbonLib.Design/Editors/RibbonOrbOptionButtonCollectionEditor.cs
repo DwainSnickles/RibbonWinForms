@@ -38,8 +38,6 @@ namespace RibbonLib
 
         private object CreateInstanceCore(Type itemType)
         {
-            RibbonDesignLog.Write($"CreateInstance asked for {itemType?.FullName ?? "null"}");
-
             // The editor can ask for the collection's element type, and RibbonItem is
             // abstract. Fall back to the concrete item type instead of throwing.
             if (itemType == null || itemType.IsAbstract)

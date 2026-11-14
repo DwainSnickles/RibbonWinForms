@@ -30,6 +30,8 @@ namespace RibbonLib
         private RibbonButtonStyle _style;
         private Image _smallImage;
         private Image _flashSmallImage;
+        private Image _autoImage;
+        private Image _autoSmallImage;
         private Size _dropDownArrowSize;
         private Padding _dropDownMargin;
         private Point _lastMousePos;
@@ -83,8 +85,10 @@ namespace RibbonLib
             DropDownItems.SetOwnerItem(this);
             _dropDownArrowSize = new Size(5, 3);
             _dropDownMargin = new Padding(6);
-            Image = CreateImage(32);
-            SmallImage = CreateImage(16);
+            _autoImage = CreateImage(32);
+            Image = _autoImage;
+            _autoSmallImage = CreateImage(16);
+            SmallImage = _autoSmallImage;
             DrawDropDownIconsBar = true;
         }
 
@@ -444,6 +448,28 @@ namespace RibbonLib
         }
 
         /// <summary>
+        /// True when the user assigned a real image instead of keeping the
+        /// transparent placeholders the constructor creates.
+        /// </summary>
+        private bool HasCustomImage() =>
+            (SmallImage != null && !ReferenceEquals(SmallImage, _autoSmallImage)) ||
+            (Image != null && !ReferenceEquals(Image, _autoImage));
+
+        /// <summary>
+        /// The image used by compact, medium and dropdown modes. Falls back to
+        /// <see cref="Image"/> when only the large image was set, so icon-only
+        /// hosts such as the quick access toolbar still show something.
+        /// </summary>
+        private Image GetEffectiveCompactImage()
+        {
+            if (SmallImage != null && !ReferenceEquals(SmallImage, _autoSmallImage))
+                return SmallImage;
+            if (Image != null && !ReferenceEquals(Image, _autoImage))
+                return Image;
+            return SmallImage;
+        }
+
+        /// <summary>
         /// Creates the DropDown menu
         /// </summary>
         protected virtual void CreateDropDown()
@@ -584,11 +610,43 @@ namespace RibbonLib
             }
             else
             {
-                if ((theSize == RibbonElementSizeMode.Large && Image != null) || SmallImage != null)
+                bool drawImage = theSize == RibbonElementSizeMode.Large
+                    ? Image != null
+                    : GetEffectiveCompactImage() != null;
+
+                if (drawImage)
                 {
                     Owner.Renderer.OnRenderRibbonItemImage(
                         new RibbonItemBoundsEventArgs(Owner, e.Graphics, e.Clip, this, OnGetImageBounds(theSize, Bounds)));
                 }
+
+                if (theSize != RibbonElementSizeMode.Large && !HasCustomImage() &&
+                    Owner != null && Owner.IsDesignMode())
+                {
+                    DrawDesignTimeImagePlaceholder(e.Graphics);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Draws a visible placeholder in the designer for buttons that still have
+        /// the constructor's transparent images, so icon-only hosts (the quick
+        /// access toolbar) show that the item exists.
+        /// </summary>
+        private void DrawDesignTimeImagePlaceholder(Graphics g)
+        {
+            Rectangle bounds = ImageBounds;
+
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+                return;
+
+            bounds.Inflate(-1, -1);
+
+            using (Pen pen = new Pen(Color.FromArgb(160, Color.Gray)))
+            using (SolidBrush brush = new SolidBrush(Color.FromArgb(30, Color.Gray)))
+            {
+                g.FillRectangle(brush, bounds);
+                g.DrawRectangle(pen, bounds);
             }
         }
 
@@ -654,16 +712,15 @@ namespace RibbonLib
                 return new Rectangle(ContentBounds.Location, new Size(32, 32));
             }
 
-            if (SmallImage != null)
+            Image compactImage = GetEffectiveCompactImage();
+
+            if (compactImage != null && compactImage.PixelFormat != PixelFormat.DontCare)
             {
-                if (SmallImage.PixelFormat != PixelFormat.DontCare)
-                {
-                    return new Rectangle(
-                        Bounds.Left + EffectiveItemMargin.Left,
-                        Bounds.Top + ((Bounds.Height - SmallImage.Height) / 2),
-                        SmallImage.Width,
-                        SmallImage.Height);
-                }
+                return new Rectangle(
+                    Bounds.Left + EffectiveItemMargin.Left,
+                    Bounds.Top + ((Bounds.Height - compactImage.Height) / 2),
+                    compactImage.Width,
+                    compactImage.Height);
             }
             return new Rectangle(ContentBounds.Location, new Size(0, 0));
         }
@@ -859,7 +916,8 @@ namespace RibbonLib
             int heightSum = EffectiveItemMargin.Vertical;
             int largeHeight = OwnerPanel == null ? 0 : OwnerPanel.ContentBounds.Height - EffectiveItemPadding.Vertical;// -EffectiveItemMargin.Vertical; //58;
 
-            Size simg = SmallImage != null ? SmallImage.Size : Size.Empty;
+            Image smallImg = theSize == RibbonElementSizeMode.Compact ? GetEffectiveCompactImage() : SmallImage;
+            Size simg = smallImg != null ? smallImg.Size : Size.Empty;
             Size img = Image != null ? Image.Size : Size.Empty;
             Size sz = Size.Empty;
 

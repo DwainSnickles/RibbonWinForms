@@ -2609,8 +2609,6 @@ namespace RibbonLib.RibbonDesign
         /// </summary>
         public bool HandleOrbMenuClick(int x, int y, bool rightButton = false)
         {
-            RibbonDesignLog.Write($"HandleOrbMenuClick x={x} y={y} right={rightButton} open={_orbMenuOpen}");
-
             // The item context menu opens inside the orb menu's bounds, so it has to be
             // checked first or its rows would select whatever entry sits underneath.
             if (IsPointOnOrbItemMenu(x, y))
@@ -2637,8 +2635,6 @@ namespace RibbonLib.RibbonDesign
                     {
                         continue;
                     }
-
-                    RibbonDesignLog.Write($"OrbMenu glyph {i} clicked");
 
                     switch (i)
                     {
@@ -3133,13 +3129,6 @@ namespace RibbonLib.RibbonDesign
             UITypeEditor editor = descriptor?.GetEditor(typeof(UITypeEditor))
                 as UITypeEditor;
 
-            RibbonDesignLog.Write(
-                $"PickOrbItemImageFromResources: item={item?.GetType().Name} " +
-                $"prop={GetOrbItemImagePropertyName(item)} " +
-                $"descriptor={(descriptor == null ? "null" : "ok")} " +
-                $"editor={(editor == null ? "null" : editor.GetType().FullName)} " +
-                $"style={(editor == null ? "-" : editor.GetEditStyle().ToString())}");
-
             if (editor == null ||
                 editor.GetEditStyle() != UITypeEditorEditStyle.Modal)
             {
@@ -3166,9 +3155,6 @@ namespace RibbonLib.RibbonDesign
                 RibbonDesignLog.Exception("PickOrbItemImageFromResources.EditValue", ex);
                 return;
             }
-
-            RibbonDesignLog.Write(
-                $"PickOrbItemImageFromResources result: {(value == null ? "null" : value.GetType().FullName)}");
 
             if (value == null || ReferenceEquals(value, current) ||
                 !(value is Image picked))
