@@ -728,23 +728,30 @@ namespace RibbonLib
         /// </summary>
         protected void NotifyOwnerRegionsChanged()
         {
-            if (Owner != null)
+            if (Owner == null)
             {
-                if (Owner == Canvas)
-                {
-                    Owner.OnRegionsChanged();
-                }
-                else if (Canvas != null)
-                {
-                    if (Canvas is RibbonOrbDropDown)
-                    {
-                        (Canvas as RibbonOrbDropDown).OnRegionsChanged();
-                    }
-                    else
-                    {
-                        Canvas.Invalidate(Bounds);
-                    }
-                }
+                return;
+            }
+
+            if (Owner == Canvas)
+            {
+                Owner.OnRegionsChanged();
+            }
+            else if (Canvas is RibbonOrbDropDown orbDropDown)
+            {
+                orbDropDown.OnRegionsChanged();
+            }
+            else if (Canvas != null)
+            {
+                Canvas.Invalidate(Bounds);
+            }
+            else
+            {
+                // Items hosted directly by the ribbon - quick access toolbar items, for one -
+                // never get a canvas. Doing nothing here meant a property that changes their
+                // size, such as SmallImage in compact mode, was never laid out or repainted and
+                // the item stayed at its old (empty) size.
+                Owner.OnRegionsChanged();
             }
         }
 
