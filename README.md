@@ -19,14 +19,14 @@ to come from the same build. Reference the control alone and the designer hosts 
 **Recommended: use the NuGet package, which brings both assemblies automatically.**
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.27-net10
+dotnet add package Dwain.RibbonLib --version 1.0.29-net10
 ```
 
 From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`** instead. The package
 adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
 - and it is the only way to get the ribbon into the toolbox.
 
-**Versions change a lot.** `1.0.27-net10` is just the version that was current when this was written, and
+**Versions change a lot.** `1.0.29-net10` is just the version that was current when this was written, and
 the builds are prerelease, so the version has to be given exactly. For the current one, go to
 **[github.com/DwainSnickles/RibbonWinForms](https://github.com/DwainSnickles/RibbonWinForms)** and click
 the **NuGet badge** at the top of the page, or search **`Dwain.RibbonLib`** on nuget.org
@@ -46,26 +46,26 @@ things that port broke.
 ![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
 access toolbar](docs/ribbon.png)
 
-## What's new in 1.0.27-net10
+## What's new in 1.0.29-net10
 
-**Tabs can carry an icon.** `RibbonTab.Image` (Appearance in the Properties window) draws the icon to
-the left of the tab text. The image is scaled to fit the tab, keeping its aspect ratio, and the tab is
-measured wider by the icon and its gap, so text is never clipped.
+**The orb menu is two panes again - on the design surface and at runtime.** Menu items sit in the left
+pane; the recent-items caption and list, then the option buttons, sit in the right one. Both panes are
+sized to their content, a pane with nothing in it takes no space, entries with no caption show
+`(menu item)` / `(recent item)` / `(option button)` instead of an invisible row, and the same item
+listed twice in a collection is shown once.
 
-```csharp
-var files = new RibbonTab { Text = "Files", Image = Properties.Resources.Folder };
-```
-
-**The design-time orb menu is sized to its content.** It is one stacked column - menu items, the recent
-items caption and list, then the option buttons - so there is no reserved pane and no divider: the
-height is exactly the rows plus the add-button footer, and with no entries it is only that footer.
-Entries with no caption and no icon show `(menu item)`, `(recent item)` or `(option button)` instead of
-an invisible row, and an item that is in a collection more than once is listed once.
+**The runtime drop-down sizes itself again.** It laid its panes and items out only when it already had a
+window handle, but the call that sizes it runs before the handle exists, so it opened at its default
+size with empty panes. It now measures without a handle and lays out again as soon as the handle is
+created.
 
 **Editing an orb entry is one gesture.** Left or right click opens the same item menu (**Add Image...**,
 **Add from Resources...**, **Clear Image**, **Delete**), anchored to the clicked row and kept clear of
 the footer's add buttons. Separators, recent items and option buttons are selectable like any other
-entry, and **Delete** now really removes the entry from its collection and from `Form1.Designer.cs`.
+entry, and **Delete** really removes the entry from its collection and from `Form1.Designer.cs`.
+
+Tab icons (`RibbonTab.Image`, scaled to fit the tab) and the quick access toolbar's image fix arrived in
+1.0.27 and 1.0.28 - see the [releases](https://github.com/DwainSnickles/RibbonWinForms/releases).
 
 ## What this fork changes
 
@@ -272,7 +272,7 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.27-net10
+dotnet add package Dwain.RibbonLib --version 1.0.29-net10
 ```
 
 The package is on nuget.org, so no local feed is needed. The published versions are prerelease, which is
@@ -330,7 +330,7 @@ powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGaller
 ```
 
 - `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
-- `-PackageVersion 1.0.27-net10` references the published package instead of the project, so the
+- `-PackageVersion 1.0.29-net10` references the published package instead of the project, so the
   sample sees the library exactly as a consumer does.
 - `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
   there rather than in the designer.
