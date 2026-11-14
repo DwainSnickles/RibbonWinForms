@@ -2184,10 +2184,9 @@ namespace RibbonLib.RibbonDesign
 
             RibbonOrbDropDown dropDown = Ribbon.OrbDropDown;
 
-            // One column, in drop-down order: menu items, then the recent-items caption and
-            // list, then the option buttons. The real drop-down splits these into two panes, but
-            // the design surface draws a single list - a pane reserved for the shorter side was
-            // painted as empty space whenever the two sides were not the same height.
+            // Two panes like the real drop-down: menu items on the left, the recent-items caption
+            // and list plus the option buttons on the right. A pane with nothing in it takes no
+            // space and is not drawn at all.
             bool hasRecentSection = dropDown.RecentItems.Count > 0
                 || !string.IsNullOrEmpty(dropDown.RecentItemsCaption);
             bool hasOptions = dropDown.OptionItems.Count > 0;
@@ -2214,7 +2213,7 @@ namespace RibbonLib.RibbonDesign
 
             if (hasRecentSection)
             {
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.RecentHeader, null));
+                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.RecentHeader, null, 1));
             }
 
             foreach (RibbonItem item in dropDown.RecentItems)
@@ -2226,12 +2225,13 @@ namespace RibbonLib.RibbonDesign
 
                 entries.Add(new OrbMenuEntry(
                     item is RibbonSeparator ? OrbMenuEntryKind.Separator : OrbMenuEntryKind.RecentItem,
-                    item));
+                    item,
+                    1));
             }
 
             if (hasRecentSection && hasOptions)
             {
-                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator, null));
+                entries.Add(new OrbMenuEntry(OrbMenuEntryKind.Separator, null, 1));
             }
 
             foreach (RibbonItem item in dropDown.OptionItems)
@@ -2243,7 +2243,8 @@ namespace RibbonLib.RibbonDesign
 
                 entries.Add(new OrbMenuEntry(
                     item is RibbonSeparator ? OrbMenuEntryKind.Separator : OrbMenuEntryKind.OptionItem,
-                    item));
+                    item,
+                    1));
             }
 
             return entries;
@@ -2483,7 +2484,7 @@ namespace RibbonLib.RibbonDesign
             // rather than the hairline it is painted with.
             int height = OrbMenuEntryHeight(entry);
 
-            // The design menu is a single stacked column, so every row uses the menu's width.
+            // Stack entries inside their own pane: left = menu items, right = recents/options.
             OrbMenuMetrics metrics = MeasureOrbMenuColumns(entries);
             FitOrbMenuColumns(metrics, menu.Width - OrbMenuPad * 2);
             const int columnGap = 10;

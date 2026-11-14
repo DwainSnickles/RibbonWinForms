@@ -182,7 +182,7 @@ namespace RibbonLib
                 {
                     //Lets measure the height of the text so we take into account the font and its size
                     SizeF cs;
-                    using (Graphics g = CreateGraphics())
+                    using (Graphics g = CreateMeasureGraphics())
                     {
                         cs = g.MeasureString(RecentItemsCaption, Ribbon.RibbonTabFont);
                     }
@@ -393,18 +393,22 @@ namespace RibbonLib
         }
 
         /// <summary>
+        /// Gets a graphics object for measuring items. Before the popup has a window handle -
+        /// which is the case when it is first laid out from <see cref="OnOpening"/> -
+        /// CreateGraphics throws, so the desktop DC is used instead.
+        /// </summary>
+        private Graphics CreateMeasureGraphics()
+        {
+            return IsHandleCreated ? CreateGraphics() : Graphics.FromHwnd(IntPtr.Zero);
+        }
+
+        /// <summary>
         /// Updates the regions and bounds of items
         /// </summary>
         private void UpdateRegions()
         {
-            // The drop-down is never shown at design time, so it has no window handle and
-            // CreateGraphics below would throw. The design surface lays the orb menu out
-            // itself and does not need these bounds.
-            if (!IsHandleCreated)
-            {
-                return;
-            }
-
+            // This runs before the popup has a window handle - OnOpening is the call that sizes
+            // it, and that happens before the handle exists - so measuring never assumes one.
             int curtop = 0;
             int curright = 0;
             int menuItemHeight = 44;
@@ -420,7 +424,7 @@ namespace RibbonLib
                 int itemMaxWidth = 0;
                 int recentMaxWidth = 0;
                 int optionsWidth = 0;
-                using (Graphics g = CreateGraphics())
+                using (Graphics g = CreateMeasureGraphics())
                 {
                     foreach (RibbonItem item in MenuItems)
                     {
@@ -520,7 +524,7 @@ namespace RibbonLib
 
             curright = ClientSize.Width - ContentMargin.Right;
 
-            using (Graphics g = CreateGraphics())
+            using (Graphics g = CreateMeasureGraphics())
             {
                 foreach (RibbonItem item in OptionItems)
                 {
@@ -652,6 +656,15 @@ namespace RibbonLib
                 #endregion
             }
 
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+
+            // Lay out again now that the popup has a handle, so the size worked out in OnOpening
+            // is applied to the real window instead of leaving it at its default size.
+            UpdateRegions();
         }
 
         protected override void OnOpening(CancelEventArgs e)
