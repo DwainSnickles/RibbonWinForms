@@ -1,7 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/nuget/v/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
+[![NuGet](https://img.shields.io/badge/nuget-1.0.31-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.31)
 
 ## Please read this first
 
@@ -26,12 +26,10 @@ From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`
 adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
 - and it is the only way to get the ribbon into the toolbox.
 
-**Versions change a lot.** `1.0.30` is just the version that was current when this was written. For the
-current one, go to
-**[github.com/DwainSnickles/RibbonWinForms](https://github.com/DwainSnickles/RibbonWinForms)** and click
-the **NuGet badge** at the top of the page, or search **`Dwain.RibbonLib`** on nuget.org
-([package page](https://www.nuget.org/packages/Dwain.RibbonLib)). Always prefer the badge or the package
-page over any version number quoted in this file.
+**Versions change a lot.** `1.0.31` is just the version that was current when this was written. For the
+current one, open the **[package page](https://www.nuget.org/packages/Dwain.RibbonLib)** on nuget.org or
+the **Releases** page on GitHub. Always prefer the package page over any version number quoted in this
+file.
 
 An Office-style ribbon control for Windows Forms, ported to **.NET 10** and repaired so it works
 both at runtime and inside the **out-of-process WinForms designer** that current Visual Studio uses.
@@ -276,8 +274,8 @@ dotnet add package Dwain.RibbonLib --version 1.0.30
 ```
 
 The package is on nuget.org, so no local feed is needed. Releases are ordinary (not prerelease)
-versions, so `dotnet add package Dwain.RibbonLib` without a version takes the newest one - check the NuGet
-badge on the repository if you want a specific one; a local build can still be packed into your own feed
+versions, so `dotnet add package Dwain.RibbonLib` without a version takes the newest one - see the package
+page if you want a specific one; a local build can still be packed into your own feed
 with
 `dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
