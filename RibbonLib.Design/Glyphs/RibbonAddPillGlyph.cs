@@ -224,31 +224,43 @@ namespace RibbonLib
             MouseButtons button,
             Point adornerCoordinates)
         {
-            if (_ribbon != null &&
-                !_ribbon.IsDisposed &&
-                g is RibbonAddPillGlyph pill &&
-                pill.TryToRibbonPoint(adornerCoordinates, out int x, out int y))
+            try
             {
-                // An open orb item context menu takes the click first: it either runs the
-                // row under the mouse or dismisses itself.
-                if (_designer.HandleOrbItemMenuClick(x, y, button))
+                if (_ribbon != null &&
+                    !_ribbon.IsDisposed &&
+                    g is RibbonAddPillGlyph pill &&
+                    pill.TryToRibbonPoint(adornerCoordinates, out int x, out int y))
                 {
-                    return base.OnMouseUp(g, button, adornerCoordinates);
-                }
+                    // An open orb item context menu takes the click first: it either runs the
+                    // row under the mouse or dismisses itself.
+                    bool handled = _designer.HandleOrbItemMenuClick(x, y, button);
 
-                // An open orb menu takes the click first: it either picks an entry or adds
-                // one, so a stray click can never select whatever is painted underneath.
-                if (_designer.HandleOrbMenuClick(x, y, button == MouseButtons.Right))
-                {
-                    return base.OnMouseUp(g, button, adornerCoordinates);
-                }
+                    // An open orb menu comes next: it either picks an entry or adds one, so a
+                    // stray click can never select whatever is painted underneath.
+                    if (!handled)
+                    {
+                        handled = _designer.HandleOrbMenuClick(x, y, button == MouseButtons.Right);
+                    }
 
-                // A pill adds; anything else the glyph covered is there to be selected, so the
-                // tab, panel or item under the click can be edited in the Properties window.
-                if (!_designer.HandlePillAt(x, y, button == MouseButtons.Right))
-                {
-                    _designer.SelectAt(x, y);
+                    // A pill adds; anything else the glyph covered is there to be selected, so
+                    // the tab, panel or item under the click can be edited in the Properties
+                    // window.
+                    if (!handled && !_designer.HandlePillAt(x, y, button == MouseButtons.Right))
+                    {
+                        _designer.SelectAt(x, y);
+                    }
                 }
+            }
+            catch (ObjectDisposedException)
+            {
+                // The surface went away under the click; nothing left to do.
+            }
+            catch (Exception ex)
+            {
+                // A design-surface click must never take the designer server down: without this
+                // the exception surfaced as a modal DesignToolsServerException dialog. The real
+                // stack goes to RibbonLibDesign.log (the delete path logs it there too).
+                RibbonDesignLog.Exception("RibbonAddPillGlyphBehavior.OnMouseUp", ex);
             }
 
             return base.OnMouseUp(g, button, adornerCoordinates);

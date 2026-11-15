@@ -2961,33 +2961,81 @@ namespace RibbonLib.RibbonDesign
         /// </summary>
         private void DeleteOrbItem(RibbonItem item)
         {
+            // This runs from the adorner glyph's mouse-up. An exception escaping it reaches the
+            // out-of-process designer's message loop, which turns a failed delete into the
+            // "DesignToolsServerException: Object reference not set to an instance of an object"
+            // dialog and kills the click. Log it and still drop the entry from the collection.
+            try
+            {
+                DeleteOrbItemCore(item);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception("RibbonDesigner.DeleteOrbItem", ex);
+
+                RibbonOrbDropDown dropDown = Ribbon?.OrbDropDown;
+
+                if (item != null && dropDown != null)
+                {
+                    try
+                    {
+                        dropDown.HandleDesignerItemRemoved(item);
+                        dropDown.OnRegionsChanged();
+                    }
+                    catch (Exception fallback)
+                    {
+                        RibbonDesignLog.Exception("RibbonDesigner.DeleteOrbItem(fallback)", fallback);
+                    }
+                }
+            }
+        }
+
+        private void DeleteOrbItemCore(RibbonItem item)
+        {
             if (item == null)
             {
                 return;
             }
 
+            RibbonOrbDropDown dropDown = Ribbon?.OrbDropDown;
             IDesignerHost host = GetService(typeof(IDesignerHost)) as IDesignerHost;
 
             if (host == null)
             {
-                Ribbon.OrbDropDown.HandleDesignerItemRemoved(item);
-                Ribbon.OrbDropDown.OnRegionsChanged();
+                RibbonDesignLog.Write("DeleteOrbItemCore: no IDesignerHost - removing the entry directly");
+
+                if (dropDown != null)
+                {
+                    dropDown.HandleDesignerItemRemoved(item);
+                    dropDown.OnRegionsChanged();
+                }
+
+                CloseOrbMenu();
                 return;
             }
 
             // DestroyComponent raises the ComponentRemoved event, which the designer's
             // changeService_ComponentRemoved handler uses to drop the item from its
             // collection - so the removal is serialized like any other designer edit.
-            DesignerTransaction transaction =
-                host.CreateTransaction("DeleteRibbonOrbItem_" + (Component?.Site?.Name ?? "item"));
-            host.DestroyComponent(item);
-            transaction.Commit();
+            // CreateTransaction is allowed to return no transaction, and committing that null
+            // was the null reference this path threw in the designer server.
+            DesignerTransaction transaction = null;
+
+            try
+            {
+                transaction = host.CreateTransaction("DeleteRibbonOrbItem_" + (Component?.Site?.Name ?? "item"));
+                host.DestroyComponent(item);
+            }
+            finally
+            {
+                transaction?.Commit();
+            }
 
             // Safety net: if the removal event did not fire, the destroyed item would be left
             // in the collection and the design surface would keep drawing it.
-            if (Ribbon != null && Ribbon.OrbDropDown.AllItems.Contains(item))
+            if (dropDown != null && dropDown.AllItems.Contains(item))
             {
-                Ribbon.OrbDropDown.HandleDesignerItemRemoved(item);
+                dropDown.HandleDesignerItemRemoved(item);
             }
 
             CloseOrbMenu();
@@ -3646,6 +3694,22 @@ namespace RibbonLib.RibbonDesign
         /// <param name="sender"></param>
         /// <param name="e"></param>
         public void changeService_ComponentRemoved(object sender, ComponentEventArgs e)
+        {
+            // Runs inside DestroyComponent, so anything thrown here aborts the delete halfway and
+            // surfaces as a designer-server crash. Log it instead.
+            try
+            {
+                changeService_ComponentRemovedCore(sender, e);
+            }
+            catch (Exception ex)
+            {
+                RibbonDesignLog.Exception(
+                    "RibbonDesigner.componentRemoved(" + (e?.Component?.GetType().Name ?? "?") + ")",
+                    ex);
+            }
+        }
+
+        private void changeService_ComponentRemovedCore(object sender, ComponentEventArgs e)
         {
             if (ReferenceEquals(e.Component, Component))
             {
