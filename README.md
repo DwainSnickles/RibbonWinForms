@@ -19,15 +19,15 @@ to come from the same build. Reference the control alone and the designer hosts 
 **Recommended: use the NuGet package, which brings both assemblies automatically.**
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.29-net10
+dotnet add package Dwain.RibbonLib --version 1.0.30
 ```
 
 From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`** instead. The package
 adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
 - and it is the only way to get the ribbon into the toolbox.
 
-**Versions change a lot.** `1.0.29-net10` is just the version that was current when this was written, and
-the builds are prerelease, so the version has to be given exactly. For the current one, go to
+**Versions change a lot.** `1.0.30` is just the version that was current when this was written. For the
+current one, go to
 **[github.com/DwainSnickles/RibbonWinForms](https://github.com/DwainSnickles/RibbonWinForms)** and click
 the **NuGet badge** at the top of the page, or search **`Dwain.RibbonLib`** on nuget.org
 ([package page](https://www.nuget.org/packages/Dwain.RibbonLib)). Always prefer the badge or the package
@@ -46,7 +46,7 @@ things that port broke.
 ![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
 access toolbar](docs/ribbon.png)
 
-## What's new in 1.0.29-net10
+## What's new in 1.0.30
 
 **The orb menu is two panes again - on the design surface and at runtime.** Menu items sit in the left
 pane; the recent-items caption and list, then the option buttons, sit in the right one. Both panes are
@@ -272,12 +272,13 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.29-net10
+dotnet add package Dwain.RibbonLib --version 1.0.30
 ```
 
-The package is on nuget.org, so no local feed is needed. The published versions are prerelease, which is
-why the version has to be given exactly - check the NuGet badge on the repository for the current one; a
-local build can still be packed into your own feed with
+The package is on nuget.org, so no local feed is needed. Releases are ordinary (not prerelease)
+versions, so `dotnet add package Dwain.RibbonLib` without a version takes the newest one - check the NuGet
+badge on the repository if you want a specific one; a local build can still be packed into your own feed
+with
 `dotnet pack RibbonLib.csproj -c Release -o %USERPROFILE%\RibbonLibFeed`.
 
 **Doing it for a whole folder at once.** `tools\Add-RibbonToolbox.ps1` adds the package to every
@@ -330,7 +331,7 @@ powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGaller
 ```
 
 - `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
-- `-PackageVersion 1.0.29-net10` references the published package instead of the project, so the
+- `-PackageVersion 1.0.30` references the published package instead of the project, so the
   sample sees the library exactly as a consumer does.
 - `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
   there rather than in the designer.

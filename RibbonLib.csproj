@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.29-net10</Version>
+	<Version>1.0.30</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo;harborsiem</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo, the RibbonWinForms contributors and harborsiem (WindowsRibbon).</Copyright>
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Orb menu fixes. The design surface draws the orb menu in two panes again - menu items on the left, the recent-items caption and list plus the option buttons on the right - instead of one list, while keeping the content-sized layout, the placeholder captions for entries with no text and a single row when a collection holds the same item more than once. At runtime the drop-down only laid its panes and items out when it already had a window handle, but the call that sizes it (OnOpening) runs before the handle exists, so it opened at its default size with empty panes and items at no position; it now measures through the desktop DC when there is no handle and lays out again when the handle is created. Every orb entry, separators included, still opens the same context menu on left or right click, and Delete removes the entry from its collection. Runtime behaviour is otherwise unchanged.</PackageReleaseNotes>
+    <PackageReleaseNotes>Stable version: the same code as 1.0.29-net10, numbered without the -net10 suffix so nuget.org lists it as a normal release instead of a prerelease. The package still targets .NET 8 and .NET 10. Orb menu fixes: The design surface draws the orb menu in two panes again - menu items on the left, the recent-items caption and list plus the option buttons on the right - instead of one list, while keeping the content-sized layout, the placeholder captions for entries with no text and a single row when a collection holds the same item more than once. At runtime the drop-down only laid its panes and items out when it already had a window handle, but the call that sizes it (OnOpening) runs before the handle exists, so it opened at its default size with empty panes and items at no position; it now measures through the desktop DC when there is no handle and lays out again when the handle is created. Every orb entry, separators included, still opens the same context menu on left or right click, and Delete removes the entry from its collection. Runtime behaviour is otherwise unchanged.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

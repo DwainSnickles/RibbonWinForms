@@ -31,7 +31,7 @@
     .\tools\New-Sample.ps1 -Name RibbonGallery
 
 .EXAMPLE
-    .\tools\New-Sample.ps1 -Name RibbonFromPackage -PackageVersion 1.0.2-net10
+    .\tools\New-Sample.ps1 -Name RibbonFromPackage -PackageVersion 1.0.30
 #>
 [CmdletBinding()]
 param(

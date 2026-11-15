@@ -24,8 +24,8 @@
     Package to add. Defaults to Dwain.RibbonLib.
 
 .PARAMETER Version
-    Package version. Defaults to 1.0.2-net10, the current prerelease on nuget.org - a prerelease
-    version has to be given exactly, because it is not what a bare package id resolves to.
+    Package version. Defaults to 1.0.30, the version that was current when this was written - pass a
+    version explicitly to get a newer one.
 
 .PARAMETER Force
     Add the reference even to projects that do not look like Windows Forms projects.
@@ -56,7 +56,7 @@ param(
 
     [string] $PackageId = 'Dwain.RibbonLib',
 
-    [string] $Version = '1.0.2-net10',
+    [string] $Version = '1.0.30',
 
     [switch] $Force,
 
