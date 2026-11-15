@@ -1,7 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/badge/nuget-1.0.31-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.31)
+[![NuGet](https://img.shields.io/badge/nuget-1.0.32-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.32)
 
 ## Please read this first
 
@@ -19,14 +19,14 @@ to come from the same build. Reference the control alone and the designer hosts 
 **Recommended: use the NuGet package, which brings both assemblies automatically.**
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.30
+dotnet add package Dwain.RibbonLib --version 1.0.32
 ```
 
 From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`** instead. The package
 adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
 - and it is the only way to get the ribbon into the toolbox.
 
-**Versions change a lot.** `1.0.31` is just the version that was current when this was written. For the
+**Versions change a lot.** `1.0.32` is just the version that was current when this was written. For the
 current one, open the **[package page](https://www.nuget.org/packages/Dwain.RibbonLib)** on nuget.org or
 the **Releases** page on GitHub. Always prefer the package page over any version number quoted in this
 file.
@@ -44,7 +44,14 @@ things that port broke.
 ![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
 access toolbar](https://raw.githubusercontent.com/DwainSnickles/RibbonWinForms/net10/docs/ribbon.png)
 
-## What's new in 1.0.30
+## What's new in 1.0.32
+
+**Deleting an orb entry no longer takes the designer down.** The delete ran through the designer host with
+the returned transaction committed unchecked and the ribbon's drop-down read without a check, so when the
+host handed back no transaction the null reference escaped the design surface's mouse handling and the
+design tools server reported it as a modal error. The transaction is optional now, the entry still leaves
+its collection when the host path fails, and a failure is written to `RibbonLibDesign.log` instead of
+escaping; the design surface's click guard is the last resort.
 
 **The orb menu is two panes again - on the design surface and at runtime.** Menu items sit in the left
 pane; the recent-items caption and list, then the option buttons, sit in the right one. Both panes are
@@ -270,7 +277,7 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.30
+dotnet add package Dwain.RibbonLib --version 1.0.32
 ```
 
 The package is on nuget.org, so no local feed is needed. Releases are ordinary (not prerelease)
@@ -329,7 +336,7 @@ powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGaller
 ```
 
 - `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
-- `-PackageVersion 1.0.30` references the published package instead of the project, so the
+- `-PackageVersion 1.0.32` references the published package instead of the project, so the
   sample sees the library exactly as a consumer does.
 - `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
   there rather than in the designer.
