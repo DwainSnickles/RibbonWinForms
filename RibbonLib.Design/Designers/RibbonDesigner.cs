@@ -2973,19 +2973,15 @@ namespace RibbonLib.RibbonDesign
             {
                 RibbonDesignLog.Exception("RibbonDesigner.DeleteOrbItem", ex);
 
+                // The delete failed, so make sure the entry still leaves the collection. A
+                // failure here is not caught again: it reaches the click guard in the adorner
+                // glyph, which is the single place that keeps the designer server alive.
                 RibbonOrbDropDown dropDown = Ribbon?.OrbDropDown;
 
                 if (item != null && dropDown != null)
                 {
-                    try
-                    {
-                        dropDown.HandleDesignerItemRemoved(item);
-                        dropDown.OnRegionsChanged();
-                    }
-                    catch (Exception fallback)
-                    {
-                        RibbonDesignLog.Exception("RibbonDesigner.DeleteOrbItem(fallback)", fallback);
-                    }
+                    dropDown.HandleDesignerItemRemoved(item);
+                    dropDown.OnRegionsChanged();
                 }
             }
         }
@@ -3694,22 +3690,6 @@ namespace RibbonLib.RibbonDesign
         /// <param name="sender"></param>
         /// <param name="e"></param>
         public void changeService_ComponentRemoved(object sender, ComponentEventArgs e)
-        {
-            // Runs inside DestroyComponent, so anything thrown here aborts the delete halfway and
-            // surfaces as a designer-server crash. Log it instead.
-            try
-            {
-                changeService_ComponentRemovedCore(sender, e);
-            }
-            catch (Exception ex)
-            {
-                RibbonDesignLog.Exception(
-                    "RibbonDesigner.componentRemoved(" + (e?.Component?.GetType().Name ?? "?") + ")",
-                    ex);
-            }
-        }
-
-        private void changeService_ComponentRemovedCore(object sender, ComponentEventArgs e)
         {
             if (ReferenceEquals(e.Component, Component))
             {
