@@ -1,7 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/nuget/vpre/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
+[![NuGet](https://img.shields.io/nuget/v/Dwain.RibbonLib?label=nuget&logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib)
 
 ## Please read this first
 
@@ -44,7 +44,7 @@ Upstream targets .NET Framework 4.8; this fork moves the library to
 things that port broke.
 
 ![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
-access toolbar](docs/ribbon.png)
+access toolbar](https://raw.githubusercontent.com/DwainSnickles/RibbonWinForms/net10/docs/ribbon.png)
 
 ## What's new in 1.0.30
 
