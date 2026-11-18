@@ -380,6 +380,11 @@ git tag -a v1.0.1 -m "1.0.1" && git push origin v1.0.1
 - Run it by hand from **Actions → Publish NuGet package → Run workflow** with `dry_run: true` to pack
   and verify a package without publishing it. The `.nupkg` and `.snupkg` are attached to the run either
   way.
+- **Packing locally needs a restore first.** `dotnet pack RibbonLib.csproj` builds the designer as part
+  of packing, and a fresh clone has no assets file for that project, so the pack stops with
+  `error NETSDK1004: Assets file 'RibbonLib.Design\obj\project.assets.json' not found`. Run
+  `dotnet restore RibbonLib.Design/RibbonLib.Design.csproj` once first. The workflow restores on its
+  own, so this only bites a local pack.
 
 ## How the design-time support is put together
 
