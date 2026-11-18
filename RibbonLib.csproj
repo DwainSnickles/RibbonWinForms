@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Dwain.RibbonLib</PackageId>
-	<Version>1.0.33</Version>
+	<Version>1.0.34</Version>
     <Title>RibbonLib for .NET 8 or 10</Title>
     <Authors>Dwain Snickles;Jose Menendez Poo;harborsiem</Authors>
     <Copyright>MS-PL. Original ribbon code (c) Jose Menendez Poo, the RibbonWinForms contributors and harborsiem (WindowsRibbon).</Copyright>
@@ -27,7 +27,7 @@
     <PackageProjectUrl>https://github.com/DwainSnickles/RibbonWinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DwainSnickles/RibbonWinForms.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>README-only release. The package README now carries a Support this project section with the Ko-fi (ko-fi.com/dwainhsnickles) and PayPal.Me (paypal.me/YTDPlatinum) links, so the package page on nuget.org shows where to send a tip. Assemblies and behaviour are unchanged from 1.0.32.</PackageReleaseNotes>
+    <PackageReleaseNotes>README-only release. The install commands in the packaged README now point at 1.0.34, so the commands on the nuget.org page match the version being published, and the Support this project section still carries the Ko-fi (ko-fi.com/dwainhsnickles) and PayPal.Me (paypal.me/YTDPlatinum) links. Assemblies and behaviour are unchanged from 1.0.33.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

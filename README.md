@@ -1,7 +1,9 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/badge/nuget-1.0.33-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.33)
+[![NuGet](https://img.shields.io/badge/nuget-1.0.34-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.34)
+[![Support this project on Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/dwainhsnickles)
+[![Donate on PayPal](https://img.shields.io/badge/PayPal-Donate-003087?logo=paypal&logoColor=white)](https://paypal.me/YTDPlatinum)
 
 ## Please read this first
 
@@ -19,14 +21,14 @@ to come from the same build. Reference the control alone and the designer hosts 
 **Recommended: use the NuGet package, which brings both assemblies automatically.**
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.33
+dotnet add package Dwain.RibbonLib --version 1.0.34
 ```
 
 From the Package Manager console or the NuGet UI, search for **`Dwain.RibbonLib`** instead. The package
 adds `RibbonLib.dll` and `RibbonLib.Design.dll` together, so there is nothing to copy into `bin` by hand
 - and it is the only way to get the ribbon into the toolbox.
 
-**Versions change a lot.** `1.0.33` is just the version that was current when this was written. For the
+**Versions change a lot.** `1.0.34` is just the version that was current when this was written. For the
 current one, open the **[package page](https://www.nuget.org/packages/Dwain.RibbonLib)** on nuget.org or
 the **Releases** page on GitHub. Always prefer the package page over any version number quoted in this
 file.
@@ -44,7 +46,13 @@ things that port broke.
 ![The ribbon on a form: the orb, a tab showing its icon, a panel with a Close button and the quick
 access toolbar](https://raw.githubusercontent.com/DwainSnickles/RibbonWinForms/net10/docs/ribbon.png)
 
-## What's new in 1.0.33
+## What's new in 1.0.34
+
+**README-only release.** The package ships this README with the install commands pointing at `1.0.34`
+and the [Support this project](#support-this-project) section, so the package page on nuget.org shows
+commands that match the version it is publishing. Assemblies and behaviour are identical to 1.0.33.
+
+### What was new in 1.0.33
 
 **README-only release.** The package ships this README with a [Support this project](#support-this-project)
 section, so the package page on nuget.org shows where to send a tip. Assemblies and behaviour are
@@ -283,7 +291,7 @@ To have the ribbon in the toolbox of a project that is *not* in this solution, i
 package — that is the supported route:
 
 ```
-dotnet add package Dwain.RibbonLib --version 1.0.33
+dotnet add package Dwain.RibbonLib --version 1.0.34
 ```
 
 The package is on nuget.org, so no local feed is needed. Releases are ordinary (not prerelease)
@@ -342,7 +350,7 @@ powershell -ExecutionPolicy Bypass -File tools\New-Sample.ps1 -Name RibbonGaller
 ```
 
 - `-Framework net8.0-windows` targets .NET 8 instead of .NET 10 (default `net10.0-windows`).
-- `-PackageVersion 1.0.33` references the published package instead of the project, so the
+- `-PackageVersion 1.0.34` references the published package instead of the project, so the
   sample sees the library exactly as a consumer does.
 - `-SkipBuild` scaffolds without compiling; the build runs by default so a broken sample fails
   there rather than in the designer.
