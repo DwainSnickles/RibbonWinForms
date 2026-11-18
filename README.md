@@ -5,6 +5,8 @@
 [![Support this project on Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/dwainhsnickles)
 [![Donate on PayPal](https://img.shields.io/badge/PayPal-Donate-003087?logo=paypal&logoColor=white)](https://paypal.me/YTDPlatinum)
 
+> **Using .NET Framework 4.x?** The same ribbon lives in [DwainSnickles/WinRibbon-4X](https://github.com/DwainSnickles/WinRibbon-4X) with legacy designer support for the in-process designer.
+
 ## Please read this first
 
 **Not installing from NuGet? Then you must add a reference to _both_ assemblies yourself.**
