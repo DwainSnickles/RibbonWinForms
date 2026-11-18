@@ -1,7 +1,7 @@
 # RibbonWinForms for .NET 10
 
 [![Build](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml/badge.svg?branch=net10)](https://github.com/DwainSnickles/RibbonWinForms/actions/workflows/build.yml)
-[![NuGet](https://img.shields.io/badge/nuget-1.0.32-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.32)
+[![NuGet](https://img.shields.io/badge/nuget-1.0.33-blue?logo=nuget)](https://www.nuget.org/packages/Dwain.RibbonLib/1.0.33)
 
 ## Please read this first
 
