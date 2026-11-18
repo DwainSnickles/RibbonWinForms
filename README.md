@@ -492,6 +492,16 @@ cause.
 - Binding a runtime `PropertyGrid` to a `Ribbon` can throw `ArgumentNullException` while it walks the
   ribbon's collections (observed during this port). The designer's own property grid is not affected.
 
+## Support this project
+
+The library is free, and stays free. If it saved you a week of work, or you shipped something
+commercial on top of it, a one-off tip is a decent way to say thanks.
+
+[**Tip via PayPal.Me**](https://paypal.me/YTDPlatinum)
+
+Tipping does not buy priority, a support contract or a feature promise - issues and pull requests
+are just as welcome and every bit as useful.
+
 ## Credits and license
 
 This library is the work of **Jose Menendez Poo** and the [RibbonWinForms](https://github.com/RibbonWinForms/RibbonWinForms)
